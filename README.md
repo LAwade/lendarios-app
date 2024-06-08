@@ -9,7 +9,7 @@ Este projeto foi criado para aperfeiçoar o sistema de Vendas/Compras da Lendár
     - Policies.
     - Gerenciamento de Menu Automático.
 - Sistema de Carrinho/Pedidos/Checkout melhor implementado.
-
+- Novo painel com Template By AdminLTE
 
 ## SISTEMA EM DESENVOLVIMENTO
 - By Lucas Awade | Lendários TeaM

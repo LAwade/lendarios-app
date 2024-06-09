@@ -57,7 +57,7 @@ class AuthController extends Controller
                 'password' => Hash::make($request->password),
             ]);
 
-            return response()->json(['success' => true, 'message' => 'Usuário registrado com sucesso!', 'data' => $user,], 201);
+            return response()->json(['success' => true, 'message' => 'Usuário registrado com sucesso!', 'data' => $user], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -80,7 +80,7 @@ class AuthController extends Controller
 
         if (Auth::attempt($request->only(['email', 'password']))) {
             $user = Auth::user();
-            return response()->json(['success' => true, 'message' => "Seja bem-vindo ao sistema {$user->name}!"], 201);
+            return response()->json(['success' => true, 'message' => "Seja bem-vindo ao sistema {$user->name}!"], 200);
         }
 
         return response()->json(['success' => false, 'message' => 'Não foi possível autenticar o usuário!'], 403);

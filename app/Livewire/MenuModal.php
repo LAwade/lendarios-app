@@ -20,7 +20,7 @@ class MenuModal extends Component
     protected $rules = [
         'name' => 'required|min:3|max:200',
         'icon' => 'min:4|max:200',
-        'path' => 'min:3|max:200',
+        'path' => 'max:200',
         'position' => 'required|integer'
     ];
 
@@ -30,7 +30,6 @@ class MenuModal extends Component
         'name.max' => 'O :attribute não pode ter mais que :max caracteres.',
         'icon.min' => 'O :attribute não pode ter menos que :min caracteres.',
         'icon.max' => 'O :attribute não pode ter mais que :max caracteres.',
-        'path.min' => 'O :attribute não pode ter menos que :min caracteres.',
         'path.max' => 'O :attribute não pode ter mais que :max caracteres.',
         'position.required' => 'O :attribute não pode ser vazio.',
         'position.integer' => 'O :attribute deve ser númerico.',

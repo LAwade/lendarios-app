@@ -25,7 +25,7 @@ Route::prefix('store')->group(function () {
 
 /**  USER ROUTES **/
 Route::prefix('user')->group(function () {
-    
+    Route::get('/orders', [App\Http\Controllers\OrderController::class, 'index']);
 });
 
 /**  ADMIN ROUTES **/

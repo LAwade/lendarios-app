@@ -14,10 +14,22 @@ class MenuSeeder extends Seeder
     public function run(): void
     {
         Menu::create([
-            'id' => 1,
             'name' => 'Administração',
-            'icon' => 'fa-solid fa-gear',
+            'icon' => 'fa fa-cog',
             'position' => 1
+        ]);
+
+        Menu::create([
+            'name' => 'Pagamentos',
+            'icon' => 'fa fa-credit-card',
+            'position' => 2
+        ]);
+
+        Menu::create([
+            'name' => 'Compras',
+            'icon' => 'fa fa-shopping-cart',
+            'position' => 3,
+            'path' => 'store/shop'
         ]);
     }
 }

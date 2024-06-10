@@ -15,18 +15,66 @@ class PageSeeder extends Seeder
     {
         Page::create([
             'name' => 'Menus',
-            'path' => 'menus',
+            'path' => 'admin/menus',
             'menu_id' => 1,
             'perm_max' => 100,
             'perm_min' => 100
         ]);
 
         Page::create([
-            'name' => 'Pages',
-            'path' => 'pages',
+            'name' => 'Páginas',
+            'path' => 'admin/pages',
             'menu_id' => 1,
             'perm_max' => 100,
             'perm_min' => 100
+        ]);
+
+        Page::create([
+            'name' => 'Permissões',
+            'path' => 'admin/permissions',
+            'menu_id' => 1,
+            'perm_max' => 100,
+            'perm_min' => 100
+        ]);
+
+        Page::create([
+            'name' => 'Status',
+            'path' => 'admin/status',
+            'menu_id' => 1,
+            'perm_max' => 100,
+            'perm_min' => 100
+        ]);
+
+        Page::create([
+            'name' => 'Categorias',
+            'path' => 'admin/categories',
+            'menu_id' => 1,
+            'perm_max' => 100,
+            'perm_min' => 100
+        ]);
+
+        Page::create([
+            'name' => 'Produtos',
+            'path' => 'admin/products',
+            'menu_id' => 1,
+            'perm_max' => 100,
+            'perm_min' => 100
+        ]);
+
+        Page::create([
+            'name' => 'Faturas',
+            'path' => 'user/invoices',
+            'menu_id' => 2,
+            'perm_max' => 100,
+            'perm_min' => 1
+        ]);
+
+        Page::create([
+            'name' => 'Pedidos',
+            'path' => 'user/orders',
+            'menu_id' => 2,
+            'perm_max' => 100,
+            'perm_min' => 1
         ]);
     }
 }

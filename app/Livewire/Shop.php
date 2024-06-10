@@ -22,9 +22,10 @@ class Shop extends Component
     {
         $this->cart = session('cart');
         $products = Product::findProductCart($this->cart);
-        DB::beginTransaction();
-
+        
         try {
+            
+            DB::beginTransaction();
             $order = new Order();
             $order->user_id = auth()->id();
             $order->status_id = 2;
@@ -33,8 +34,8 @@ class Shop extends Component
                 throw new Exception('Não foi possível criar a ordem de pedido.');
             }
 
-            $itens = new Item();
             foreach ($products as $c) {
+                $itens = new Item();
                 $itens->order_id = $order->id;
                 $itens->product_id = $c->id;
                 $itens->quantity = $c->quantidade;
@@ -45,7 +46,6 @@ class Shop extends Component
             DB::commit();
         } catch (Exception $e) {
             DB::rollBack();
-            dd($e->getMessage());
             session()->flash('error', $e->getMessage());
         }
 

@@ -20,7 +20,7 @@ return new class extends Migration
 
         Schema::create('itens', function (Blueprint $table) {
             $table->increments('id');
-            $table->foreignId('order_id')->references('id')->on('orders')->name('order_id')->index();
+            $table->foreignId('order_id')->references('id')->on('orders')->name('order_id')->index()->onDelete('cascade');
             $table->foreignId('product_id')->references('id')->on('products')->name('product_id')->index();
             $table->integer('quantity');
         });

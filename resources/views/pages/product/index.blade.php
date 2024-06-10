@@ -18,7 +18,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="card-body table-responsive p-0" style="height: 100%">
                     <table class="table table-striped">
                         <thead>

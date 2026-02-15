@@ -22,7 +22,7 @@ export default function RegisterPage() {
 
         try {
             await register(formData);
-            navigate('/shop');
+            navigate('/dashboard');
         } catch (err) {
             const msg = err.response?.data?.errors 
                 ? Object.values(err.response.data.errors)[0][0] 

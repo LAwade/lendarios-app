@@ -18,7 +18,7 @@ export default function LoginPage() {
 
         try {
             await login(email, password);
-            navigate('/shop');
+            navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Erro ao autenticar. Verifique seus dados.');
         } finally {

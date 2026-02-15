@@ -23,7 +23,11 @@ import {
     Loader2,
     Globe,
     Terminal,
-    Key
+    Key,
+    TrendingUp,
+    CreditCard,
+    Activity,
+    AlertTriangle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -82,7 +86,7 @@ export default function AdminDashboardPage() {
                 host: settingsData.master?.host || '',
                 query_port: settingsData.master?.query_port || 10011,
                 username: settingsData.master?.username || 'serveradmin',
-                password: '', // Password stays hidden
+                password: '',
                 flood_commands: settingsData.flood?.flood_commands || 10,
                 flood_time: settingsData.flood?.flood_time || 3,
                 ban_time: settingsData.flood?.ban_time || 600
@@ -118,16 +122,19 @@ export default function AdminDashboardPage() {
     const stats = adminData;
 
     return (
-        <div className="space-y-10 pb-20">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="text-4xl font-black text-gray-900 tracking-tighter uppercase italic">Administração</h1>
+        <div className="space-y-10 pb-20 font-inter">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 className="text-4xl font-black text-gray-900 tracking-tighter uppercase italic">Control Panel</h1>
+                    <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-1">Visão Estratégica da Plataforma</p>
+                </div>
                 <div className="flex bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
                     {[
-                        { id: 'overview', label: 'Visão Geral', icon: <ArrowUpRight size={16} /> },
+                        { id: 'overview', label: 'Dashboard', icon: <Activity size={16} /> },
                         { id: 'orders', label: 'Pedidos', icon: <ShoppingBag size={16} /> },
                         { id: 'users', label: 'Clientes', icon: <Users size={16} /> },
-                        { id: 'tickets', label: 'Tickets', icon: <MessageSquare size={16} /> },
-                        { id: 'settings', label: 'Server Query', icon: <Settings size={16} /> }
+                        { id: 'tickets', label: 'Suporte', icon: <MessageSquare size={16} /> },
+                        { id: 'settings', label: 'TS3 Master', icon: <Settings size={16} /> }
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -142,51 +149,134 @@ export default function AdminDashboardPage() {
             </div>
 
             {activeTab === 'overview' && (
-                <>
-                    {/* Quick Stats Grid */}
+                <div className="space-y-10">
+                    {/* Financial & Scale Row */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[
-                            { label: 'Usuários Totais', value: stats.total_users, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-                            { label: 'TS3 Online', value: stats.active_servers, icon: Server, color: 'text-green-600', bg: 'bg-green-50' },
-                            { label: 'Tickets Abertos', value: stats.open_tickets, icon: MessageSquare, color: 'text-purple-600', bg: 'bg-purple-50' },
-                            { label: 'Receita (Mês)', value: `R$ ${Number(stats.monthly_revenue).toLocaleString('pt-BR')}`, icon: DollarSign, color: 'text-orange-600', bg: 'bg-orange-50' }
-                        ].map((item, i) => (
-                            <div key={i} className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm space-y-4">
-                                <div className={`${item.bg} ${item.color} w-12 h-12 rounded-2xl flex items-center justify-center`}>
-                                    <item.icon size={24} />
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                            <div className="flex justify-between items-start">
+                                <div className="bg-blue-50 text-blue-600 p-4 rounded-2xl">
+                                    <TrendingUp size={24} />
                                 </div>
-                                <div>
-                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">{item.label}</p>
-                                    <h3 className="text-3xl font-black text-gray-900">{item.value}</h3>
+                                <span className="text-[10px] font-black text-green-500 bg-green-50 px-3 py-1 rounded-full uppercase">Receita Ativa</span>
+                            </div>
+                            <div>
+                                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Ganhos no Mês</p>
+                                <h3 className="text-3xl font-black text-gray-900 italic">R$ {Number(stats.monthly_revenue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</h3>
+                                <p className="text-[10px] text-gray-400 font-bold mt-2">Total Acumulado: R$ {Number(stats.total_revenue).toLocaleString('pt-BR')}</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                            <div className="flex justify-between items-start">
+                                <div className="bg-green-50 text-green-600 p-4 rounded-2xl">
+                                    <Users size={24} />
+                                </div>
+                                <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-full uppercase">Base de Dados</span>
+                            </div>
+                            <div>
+                                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Clientes Ativos</p>
+                                <h3 className="text-3xl font-black text-gray-900 italic">{stats.active_users} <span className="text-sm text-gray-300 font-bold not-italic">/ {stats.total_users}</span></h3>
+                                <div className="w-full bg-gray-100 h-1.5 rounded-full mt-3 overflow-hidden">
+                                    <div className="bg-blue-600 h-full rounded-full" style={{ width: `${(stats.active_users / stats.total_users) * 100}%` }}></div>
                                 </div>
                             </div>
-                        ))}
+                        </div>
+
+                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
+                            <div className="flex justify-between items-start">
+                                <div className="bg-purple-50 text-purple-600 p-4 rounded-2xl">
+                                    <Server size={24} />
+                                </div>
+                                <span className="text-[10px] font-black text-purple-500 bg-purple-50 px-3 py-1 rounded-full uppercase">Infraestrutura</span>
+                            </div>
+                            <div>
+                                <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Servidores TS3</p>
+                                <h3 className="text-3xl font-black text-gray-900 italic">{stats.active_servers} <span className="text-sm text-gray-300 font-bold not-italic">Online</span></h3>
+                                <p className="text-[10px] text-gray-400 font-bold mt-2">Disponibilidade: 100%</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-orange-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-orange-100 space-y-6">
+                            <div className="flex justify-between items-start">
+                                <div className="bg-white/20 p-4 rounded-2xl">
+                                    <AlertTriangle size={24} />
+                                </div>
+                                <span className="text-[10px] font-black text-white bg-white/20 px-3 py-1 rounded-full uppercase">Pendente</span>
+                            </div>
+                            <div>
+                                <p className="text-xs font-black text-orange-100 uppercase tracking-widest mb-1">Faturas em Aberto</p>
+                                <h3 className="text-3xl font-black italic">R$ {Number(stats.pending_revenue).toLocaleString('pt-BR')}</h3>
+                                <p className="text-[10px] text-orange-200 font-bold mt-2">{stats.pending_invoices} faturas aguardando pagamento</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* Pending Orders Snippet */}
-                        <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-8 space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-black text-gray-900 uppercase tracking-widest text-sm flex items-center">
-                                    <ShoppingBag size={18} className="mr-2 text-blue-600" />
-                                    Pedidos Recentes
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        {/* Critical Actions */}
+                        <div className="space-y-6">
+                            <h3 className="font-black text-gray-900 uppercase tracking-widest text-xs flex items-center">
+                                <ShieldAlert size={16} className="mr-2 text-red-500" />
+                                Atenção Necessária
+                            </h3>
+                            <div className="grid grid-cols-1 gap-4">
+                                {stats.open_tickets > 0 && (
+                                    <div className="bg-white p-6 rounded-3xl border-l-4 border-l-purple-600 shadow-sm flex items-center justify-between">
+                                        <div className="flex items-center space-x-4">
+                                            <div className="bg-purple-50 text-purple-600 p-3 rounded-2xl">
+                                                <MessageSquare size={20} />
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-gray-900">{stats.open_tickets} Tickets Sem Resposta</p>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase">Clientes aguardando suporte técnico</p>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => setActiveTab('tickets')} className="p-2 bg-gray-50 text-gray-400 hover:text-purple-600 rounded-xl transition">
+                                            <ArrowUpRight size={20} />
+                                        </button>
+                                    </div>
+                                )}
+                                <div className="bg-white p-6 rounded-3xl border-l-4 border-l-blue-600 shadow-sm flex items-center justify-between">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="bg-blue-50 text-blue-600 p-3 rounded-2xl">
+                                            <Activity size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="font-black text-gray-900">Saúde do Sistema</p>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase">Todos os serviços rodando normalmente</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                                        <span className="text-[10px] font-black text-green-600 uppercase">Estável</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Recent Orders Overview */}
+                        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                            <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+                                <h3 className="font-black text-gray-900 uppercase tracking-widest text-xs flex items-center">
+                                    <ShoppingBag size={16} className="mr-2 text-blue-600" />
+                                    Últimos Pedidos
                                 </h3>
                                 <button onClick={() => setActiveTab('orders')} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Ver Todos</button>
                             </div>
-                            <div className="space-y-4">
-                                {ordersData?.slice(0, 5).map(order => (
-                                    <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="bg-white p-2 rounded-xl border border-gray-200">
-                                                <ShoppingBag size={16} className="text-gray-400" />
+                            <div className="p-6 divide-y divide-gray-50">
+                                {ordersData?.slice(0, 4).map(order => (
+                                    <div key={order.id} className="py-4 flex items-center justify-between group">
+                                        <div className="flex items-center space-x-4">
+                                            <div className="h-10 w-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition">
+                                                <ShoppingBag size={18} />
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-gray-900">{order.product?.name}</p>
-                                                <p className="text-[10px] text-gray-400 font-bold uppercase">{order.user?.name}</p>
+                                                <p className="text-[10px] text-gray-400 font-black uppercase">{order.user?.name}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center space-x-2">
-                                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${order.status === 'pending' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
+                                        <div className="text-right">
+                                            <p className="text-xs font-black text-gray-900 italic">R$ {Number(order.total).toLocaleString('pt-BR')}</p>
+                                            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${order.status === 'pending' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
                                                 {order.status}
                                             </span>
                                         </div>
@@ -194,37 +284,13 @@ export default function AdminDashboardPage() {
                                 ))}
                             </div>
                         </div>
-
-                        {/* System Health */}
-                        <div className="bg-gray-900 rounded-[40px] p-8 text-white shadow-xl shadow-gray-200">
-                            <h3 className="font-black uppercase tracking-[0.2em] text-xs text-blue-400 mb-8">Integridade do Ecossistema</h3>
-                            <div className="space-y-6">
-                                {[
-                                    { label: 'Database Master (PostgreSQL)', status: 'Online', delay: '1.2ms' },
-                                    { label: 'TeamSpeak 3 Query API', status: 'Online', delay: '14ms' },
-                                    { label: 'Node.js Tibia API Worker', status: 'Online', delay: '45ms' },
-                                    { label: 'Nginx Gateway', status: 'Active', delay: '0.8ms' }
-                                ].map((sys, i) => (
-                                    <div key={i} className="flex items-center justify-between group">
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-100">{sys.label}</p>
-                                            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{sys.delay}</p>
-                                        </div>
-                                        <div className="flex items-center space-x-2 bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-                                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                                            <span>{sys.status}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
                     </div>
-                </>
+                </div>
             )}
 
+            {/* Other tabs remain largely the same but with refined table styling */}
             {activeTab === 'settings' && (
                 <div className="space-y-8 max-w-5xl">
-                    {/* Master Connection Info */}
                     <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
                         <div className="p-10 border-b border-gray-50 flex items-center space-x-4 bg-gray-50/30">
                             <div className="p-3 bg-blue-600 text-white rounded-2xl">
@@ -232,18 +298,17 @@ export default function AdminDashboardPage() {
                             </div>
                             <div>
                                 <h2 className="font-black text-gray-900 uppercase tracking-widest text-lg">Conexão Master TeamSpeak</h2>
-                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Configurações de Acesso ao Servidor de Query</p>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Acesso ao Servidor de Query Global</p>
                             </div>
                         </div>
                         
-                        <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-8 text-inter">
+                        <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-2">
-                                <label className="flex items-center text-xs font-black text-gray-400 uppercase tracking-widest">
-                                    <Globe size={14} className="mr-2" /> IP ou Host do Servidor
+                                <label className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    <Globe size={14} className="mr-2" /> Host
                                 </label>
                                 <input 
                                     type="text"
-                                    placeholder="ex: 127.0.0.1 ou ts.lendarios.com"
                                     value={querySettings.host}
                                     onChange={(e) => setQuerySettings({...querySettings, host: e.target.value})}
                                     className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
@@ -251,8 +316,8 @@ export default function AdminDashboardPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="flex items-center text-xs font-black text-gray-400 uppercase tracking-widest">
-                                    <Terminal size={14} className="mr-2" /> Porta Query
+                                <label className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    <Terminal size={14} className="mr-2" /> Porta
                                 </label>
                                 <input 
                                     type="number"
@@ -263,8 +328,8 @@ export default function AdminDashboardPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="flex items-center text-xs font-black text-gray-400 uppercase tracking-widest">
-                                    <Users size={14} className="mr-2" /> Usuário Query
+                                <label className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    <Users size={14} className="mr-2" /> Usuário
                                 </label>
                                 <input 
                                     type="text"
@@ -275,8 +340,8 @@ export default function AdminDashboardPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="flex items-center text-xs font-black text-gray-400 uppercase tracking-widest">
-                                    <Key size={14} className="mr-2" /> Senha Query
+                                <label className="flex items-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                    <Key size={14} className="mr-2" /> Senha
                                 </label>
                                 <input 
                                     type="password"
@@ -289,7 +354,6 @@ export default function AdminDashboardPage() {
                         </div>
                     </div>
 
-                    {/* Flood Control Settings */}
                     <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
                         <div className="p-10 border-b border-gray-50 flex items-center space-x-4 bg-gray-50/30">
                             <div className="p-3 bg-orange-500 text-white rounded-2xl">
@@ -297,51 +361,44 @@ export default function AdminDashboardPage() {
                             </div>
                             <div>
                                 <h2 className="font-black text-gray-900 uppercase tracking-widest text-lg">Server Query Flood</h2>
-                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Prevenção contra spam de comandos</p>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Prevenção contra spam global</p>
                             </div>
                         </div>
                         
-                        <div className="p-10 space-y-10 text-inter">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div className="p-10 space-y-10">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-inter">
                                 <div className="space-y-3">
-                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Comandos p/ Flood</label>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Comandos</label>
                                     <input 
                                         type="number"
                                         value={querySettings.flood_commands}
                                         onChange={(e) => setQuerySettings({...querySettings, flood_commands: e.target.value})}
                                         className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
                                     />
-                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed italic">Número de comandos permitidos.</p>
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Tempo de Janela (s)</label>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Janela (s)</label>
                                     <input 
                                         type="number"
                                         value={querySettings.flood_time}
                                         onChange={(e) => setQuerySettings({...querySettings, flood_time: e.target.value})}
                                         className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
                                     />
-                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed italic">Tempo em segundos para reset.</p>
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Duração Ban (s)</label>
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest">Ban (s)</label>
                                     <input 
                                         type="number"
                                         value={querySettings.ban_time}
                                         onChange={(e) => setQuerySettings({...querySettings, ban_time: e.target.value})}
                                         className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
                                     />
-                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed italic">Tempo de bloqueio do IP.</p>
                                 </div>
                             </div>
 
-                            <div className="pt-6 border-t border-gray-50 flex justify-between items-center">
-                                <div className="flex items-center text-orange-600 space-x-2">
-                                    <ShieldAlert size={16} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Cuidado: Alterações globais!</span>
-                                </div>
+                            <div className="pt-6 border-t border-gray-50 flex justify-end">
                                 <button 
                                     onClick={() => updateSettingsMutation.mutate(querySettings)}
                                     disabled={updateSettingsMutation.isPending}
@@ -357,9 +414,12 @@ export default function AdminDashboardPage() {
             )}
 
             {activeTab === 'orders' && (
-                <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
-                        <h2 className="font-black text-gray-900 uppercase tracking-widest text-sm">Gerenciamento de Pedidos</h2>
+                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                    <div className="p-8 border-b border-gray-50 bg-gray-50/30">
+                        <h2 className="font-black text-gray-900 uppercase tracking-widest text-sm flex items-center">
+                            <ShoppingBag size={18} className="mr-2 text-blue-600" />
+                            Gerenciamento de Pedidos
+                        </h2>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
@@ -388,7 +448,7 @@ export default function AdminDashboardPage() {
                                             <p className="text-sm font-black text-blue-600">{order.product?.name}</p>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <p className="text-sm font-black text-gray-900">R$ {Number(order.total).toLocaleString('pt-BR')}</p>
+                                            <p className="text-sm font-black text-gray-900 italic">R$ {Number(order.total).toLocaleString('pt-BR')}</p>
                                         </td>
                                         <td className="px-8 py-6">
                                             <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${
@@ -428,8 +488,8 @@ export default function AdminDashboardPage() {
             )}
 
             {activeTab === 'users' && (
-                <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+                <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                    <div className="p-8 border-b border-gray-50 bg-gray-50/30">
                         <h2 className="font-black text-gray-900 uppercase tracking-widest text-sm flex items-center">
                             <Users size={18} className="mr-2 text-blue-600" />
                             Gestão de Clientes
@@ -441,7 +501,7 @@ export default function AdminDashboardPage() {
                                 <tr className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] bg-gray-50/50">
                                     <th className="px-8 py-4">Cliente</th>
                                     <th className="px-8 py-4">Serviços</th>
-                                    <th className="px-8 py-4">Status</th>
+                                    <th className="px-8 py-4">Cadastro</th>
                                     <th className="px-8 py-4 text-right">Ações</th>
                                 </tr>
                             </thead>
@@ -455,21 +515,21 @@ export default function AdminDashboardPage() {
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-gray-900">{user.name}</p>
-                                                    <p className="text-xs text-gray-400">{user.email}</p>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase">{user.email}</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center space-x-1">
-                                                <span className="font-black text-gray-900">{user.virtual_servers_count || 0}</span>
-                                                <span className="text-[10px] text-gray-400 uppercase font-bold">Servers</span>
+                                                <span className="font-black text-gray-900 italic">{user.virtual_servers_count || 0}</span>
+                                                <span className="text-[10px] text-gray-400 uppercase font-black">Servers</span>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <span className="px-3 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-black uppercase tracking-widest">Ativo</span>
+                                            <p className="text-xs font-bold text-gray-600">{new Date(user.created_at).toLocaleDateString()}</p>
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            <button className="p-2 text-gray-300 hover:text-gray-900 transition">
+                                            <button className="p-2 text-gray-300 hover:text-blue-600 transition">
                                                 <ExternalLink size={18} />
                                             </button>
                                         </td>

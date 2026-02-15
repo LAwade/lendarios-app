@@ -23,10 +23,20 @@ class AdminApiController extends Controller
             'success' => true,
             'data' => [
                 'total_users' => User::count(),
-                'active_servers' => TeamSpeakVirtualServer::where('status', 'online')->count(),
+                'active_users' => User::whereHas('virtualServers', function($q) {
+                    $q->where('expires_at', '>', now());
+                })->count(),
+                'active_servers' => TeamSpeakVirtualServer::where('status', 'online')
+                    ->where('expires_at', '>', now())
+                    ->count(),
                 'pending_invoices' => Invoice::where('status_id', 2)->count(),
                 'open_tickets' => Ticket::where('status', 'open')->count(),
-                'monthly_revenue' => Invoice::where('status_id', 1)->whereMonth('created_at', now()->month)->sum('amount'),
+                'monthly_revenue' => Invoice::where('status_id', 1)
+                    ->whereMonth('paid_at', now()->month)
+                    ->whereYear('paid_at', now()->year)
+                    ->sum('amount'),
+                'total_revenue' => Invoice::where('status_id', 1)->sum('amount'),
+                'pending_revenue' => Invoice::where('status_id', 2)->sum('amount'),
             ]
         ]);
     }

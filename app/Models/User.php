@@ -52,4 +52,19 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Permission::class);
     }
+
+    public function virtualServers()
+    {
+        return $this->hasMany(TeamSpeakVirtualServer::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->permission_id === 1;
+    }
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, X, Plus, Minus, Trash2, LogOut, LayoutDashboard, LifeBuoy } from 'lucide-react';
+import { ShoppingCart, User, X, Plus, Minus, Trash2, LogOut, LayoutDashboard, LifeBuoy, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import Logo from '../components/Logo';
@@ -71,6 +71,12 @@ export default function MainLayout() {
                                             <LayoutDashboard size={18} className="text-gray-400" />
                                             <span>Dashboard</span>
                                         </Link>
+                                        {user?.permission_id === 1 && (
+                                            <Link to="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center space-x-3 px-4 py-3 hover:bg-blue-50 transition text-sm font-black text-blue-600">
+                                                <ShieldCheck size={18} />
+                                                <span>Painel Admin</span>
+                                            </Link>
+                                        )}
                                         <Link to="/tickets" onClick={() => setIsUserMenuOpen(false)} className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition text-sm font-bold">
                                             <LifeBuoy size={18} className="text-gray-400" />
                                             <span>Tickets de Suporte</span>

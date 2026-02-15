@@ -1,5 +1,5 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { 
     Users, 
@@ -12,11 +12,18 @@ import {
     MoreVertical,
     CheckCircle,
     XCircle,
-    Clock
+    Clock,
+    ShoppingBag,
+    Check,
+    X,
+    ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function AdminDashboardPage() {
+    const [activeTab, setActiveTab] = useState('overview');
+    const queryClient = useQueryClient();
+
     const { data: adminData, isLoading } = useQuery({
         queryKey: ['admin-stats'],
         queryFn: async () => {
@@ -33,52 +40,215 @@ export default function AdminDashboardPage() {
         }
     });
 
-    if (isLoading || loadingUsers) return <div className="flex justify-center items-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
+    const { data: ordersData, isLoading: loadingOrders } = useQuery({
+        queryKey: ['admin-orders'],
+        queryFn: async () => {
+            const response = await axios.get('/api/v1/admin/orders');
+            return response.data.data;
+        }
+    });
+
+    const confirmMutation = useMutation({
+        mutationFn: (id) => axios.post(`/api/v1/admin/orders/${id}/confirm`),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['admin-orders']);
+            queryClient.invalidateQueries(['admin-stats']);
+        }
+    });
+
+    const cancelMutation = useMutation({
+        mutationFn: (id) => axios.post(`/api/v1/admin/orders/${id}/cancel`),
+        onSuccess: () => {
+            queryClient.invalidateQueries(['admin-orders']);
+        }
+    });
+
+    if (isLoading || loadingUsers || loadingOrders) return <div className="flex justify-center items-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>;
 
     const stats = adminData;
 
     return (
         <div className="space-y-10 pb-20">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h1 className="text-4xl font-black text-gray-900 tracking-tighter uppercase italic">Administração</h1>
-                <div className="text-sm font-bold text-gray-400 uppercase tracking-[0.2em] bg-gray-100 px-4 py-2 rounded-xl">Master Access</div>
+                <div className="flex bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+                    {[
+                        { id: 'overview', label: 'Visão Geral', icon: <ArrowUpRight size={16} /> },
+                        { id: 'orders', label: 'Pedidos', icon: <ShoppingBag size={16} /> },
+                        { id: 'users', label: 'Clientes', icon: <Users size={16} /> },
+                        { id: 'tickets', label: 'Tickets', icon: <MessageSquare size={16} /> }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition whitespace-nowrap ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-400 hover:text-gray-900'}`}
+                        >
+                            {tab.icon}
+                            <span>{tab.label}</span>
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                    { label: 'Usuários Totais', value: stats.total_users, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-                    { label: 'TS3 Online', value: stats.active_servers, icon: Server, color: 'text-green-600', bg: 'bg-green-50' },
-                    { label: 'Tickets Abertos', value: stats.open_tickets, icon: MessageSquare, color: 'text-purple-600', bg: 'bg-purple-50' },
-                    { label: 'Receita (Mês)', value: `R$ ${Number(stats.monthly_revenue).toLocaleString('pt-BR')}`, icon: DollarSign, color: 'text-orange-600', bg: 'bg-orange-50' }
-                ].map((item, i) => (
-                    <div key={i} className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm space-y-4">
-                        <div className={`${item.bg} ${item.color} w-12 h-12 rounded-2xl flex items-center justify-center`}>
-                            <item.icon size={24} />
+            {activeTab === 'overview' && (
+                <>
+                    {/* Quick Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[
+                            { label: 'Usuários Totais', value: stats.total_users, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+                            { label: 'TS3 Online', value: stats.active_servers, icon: Server, color: 'text-green-600', bg: 'bg-green-50' },
+                            { label: 'Tickets Abertos', value: stats.open_tickets, icon: MessageSquare, color: 'text-purple-600', bg: 'bg-purple-50' },
+                            { label: 'Receita (Mês)', value: `R$ ${Number(stats.monthly_revenue).toLocaleString('pt-BR')}`, icon: DollarSign, color: 'text-orange-600', bg: 'bg-orange-50' }
+                        ].map((item, i) => (
+                            <div key={i} className="bg-white p-8 rounded-[32px] border border-gray-100 shadow-sm space-y-4">
+                                <div className={`${item.bg} ${item.color} w-12 h-12 rounded-2xl flex items-center justify-center`}>
+                                    <item.icon size={24} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">{item.label}</p>
+                                    <h3 className="text-3xl font-black text-gray-900">{item.value}</h3>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {/* Pending Orders Snippet */}
+                        <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm p-8 space-y-6">
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-black text-gray-900 uppercase tracking-widest text-sm flex items-center">
+                                    <ShoppingBag size={18} className="mr-2 text-blue-600" />
+                                    Pedidos Recentes
+                                </h3>
+                                <button onClick={() => setActiveTab('orders')} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Ver Todos</button>
+                            </div>
+                            <div className="space-y-4">
+                                {ordersData?.slice(0, 5).map(order => (
+                                    <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="bg-white p-2 rounded-xl border border-gray-200">
+                                                <ShoppingBag size={16} className="text-gray-400" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold text-gray-900">{order.product?.name}</p>
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase">{order.user?.name}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${order.status === 'pending' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
+                                                {order.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">{item.label}</p>
-                            <h3 className="text-3xl font-black text-gray-900">{item.value}</h3>
+
+                        {/* System Health */}
+                        <div className="bg-gray-900 rounded-[40px] p-8 text-white shadow-xl shadow-gray-200">
+                            <h3 className="font-black uppercase tracking-[0.2em] text-xs text-blue-400 mb-8">Integridade do Ecossistema</h3>
+                            <div className="space-y-6">
+                                {[
+                                    { label: 'Database Master (PostgreSQL)', status: 'Online', delay: '1.2ms' },
+                                    { label: 'TeamSpeak 3 Query API', status: 'Online', delay: '14ms' },
+                                    { label: 'Node.js Tibia API Worker', status: 'Online', delay: '45ms' },
+                                    { label: 'Nginx Gateway', status: 'Active', delay: '0.8ms' }
+                                ].map((sys, i) => (
+                                    <div key={i} className="flex items-center justify-between group">
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-100">{sys.label}</p>
+                                            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{sys.delay}</p>
+                                        </div>
+                                        <div className="flex items-center space-x-2 bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                                            <span>{sys.status}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                ))}
-            </div>
+                </>
+            )}
 
-            {/* Main Content Sections */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 text-inter">
-                {/* Users Table */}
-                <div className="lg:col-span-8 bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            {activeTab === 'orders' && (
+                <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                    <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
+                        <h2 className="font-black text-gray-900 uppercase tracking-widest text-sm">Gerenciamento de Pedidos</h2>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] bg-gray-50/50">
+                                    <th className="px-8 py-4">ID / Data</th>
+                                    <th className="px-8 py-4">Cliente</th>
+                                    <th className="px-8 py-4">Produto</th>
+                                    <th className="px-8 py-4">Valor</th>
+                                    <th className="px-8 py-4">Status</th>
+                                    <th className="px-8 py-4 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {ordersData?.map(order => (
+                                    <tr key={order.id} className="hover:bg-gray-50/50 transition">
+                                        <td className="px-8 py-6">
+                                            <p className="text-xs font-black text-gray-900">#{order.id}</p>
+                                            <p className="text-[10px] text-gray-400">{new Date(order.created_at).toLocaleDateString()}</p>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <p className="text-sm font-bold text-gray-900">{order.user?.name}</p>
+                                            <p className="text-[10px] text-gray-400">{order.user?.email}</p>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <p className="text-sm font-black text-blue-600">{order.product?.name}</p>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <p className="text-sm font-black text-gray-900">R$ {Number(order.total).toLocaleString('pt-BR')}</p>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${
+                                                order.status === 'pending' ? 'bg-orange-50 text-orange-600' : 
+                                                order.status === 'completed' ? 'bg-green-50 text-green-600' : 
+                                                'bg-red-50 text-red-600'
+                                            }`}>
+                                                {order.status === 'pending' ? 'Aguardando' : order.status === 'completed' ? 'Ativo' : 'Cancelado'}
+                                            </span>
+                                        </td>
+                                        <td className="px-8 py-6 text-right">
+                                            {order.status === 'pending' && (
+                                                <div className="flex items-center justify-end space-x-2">
+                                                    <button 
+                                                        onClick={() => confirmMutation.mutate(order.id)}
+                                                        className="p-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-600 hover:text-white transition"
+                                                        title="Confirmar e Ativar"
+                                                    >
+                                                        <Check size={16} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => cancelMutation.mutate(order.id)}
+                                                        className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition"
+                                                        title="Cancelar Pedido"
+                                                    >
+                                                        <X size={16} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'users' && (
+                <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                     <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
                         <h2 className="font-black text-gray-900 uppercase tracking-widest text-sm flex items-center">
                             <Users size={18} className="mr-2 text-blue-600" />
                             Gestão de Clientes
                         </h2>
-                        <div className="flex items-center space-x-2">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={14} />
-                                <input type="text" placeholder="Buscar cliente..." className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-blue-600 transition" />
-                            </div>
-                        </div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
@@ -106,7 +276,7 @@ export default function AdminDashboardPage() {
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center space-x-1">
-                                                <span className="font-black text-gray-900">{user.virtual_servers_count}</span>
+                                                <span className="font-black text-gray-900">{user.virtual_servers_count || 0}</span>
                                                 <span className="text-[10px] text-gray-400 uppercase font-bold">Servers</span>
                                             </div>
                                         </td>
@@ -115,7 +285,7 @@ export default function AdminDashboardPage() {
                                         </td>
                                         <td className="px-8 py-6 text-right">
                                             <button className="p-2 text-gray-300 hover:text-gray-900 transition">
-                                                <MoreVertical size={18} />
+                                                <ExternalLink size={18} />
                                             </button>
                                         </td>
                                     </tr>
@@ -123,62 +293,8 @@ export default function AdminDashboardPage() {
                             </tbody>
                         </table>
                     </div>
-                    <div className="p-6 bg-gray-50/30 border-t border-gray-50 text-center">
-                        <button className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline">Ver todos os clientes</button>
-                    </div>
                 </div>
-
-                {/* Sidebar Alerts / Pending Invoices */}
-                <div className="lg:col-span-4 space-y-8">
-                    <div className="bg-gray-900 rounded-[40px] p-8 text-white shadow-xl shadow-gray-200 overflow-hidden relative">
-                        <div className="relative z-10 space-y-6">
-                            <h3 className="font-black uppercase tracking-[0.2em] text-xs text-blue-400">Ações Urgentes</h3>
-                            <div className="space-y-4">
-                                <div className="bg-white/5 p-5 rounded-3xl border border-white/5 flex items-start space-x-4 hover:bg-white/10 transition cursor-pointer group">
-                                    <div className="bg-purple-600/20 text-purple-400 p-2 rounded-xl">
-                                        <MessageSquare size={18} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-bold">{stats.open_tickets} Tickets Aguardando</p>
-                                        <p className="text-[10px] text-gray-500 font-medium mt-1 uppercase tracking-wider">Resposta pendente</p>
-                                    </div>
-                                    <ArrowUpRight size={14} className="text-gray-600 group-hover:text-blue-400 transition" />
-                                </div>
-
-                                <div className="bg-white/5 p-5 rounded-3xl border border-white/5 flex items-start space-x-4 hover:bg-white/10 transition cursor-pointer group">
-                                    <div className="bg-orange-600/20 text-orange-400 p-2 rounded-xl">
-                                        <DollarSign size={18} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-bold">{stats.pending_invoices} Faturas Vencidas</p>
-                                        <p className="text-[10px] text-gray-500 font-medium mt-1 uppercase tracking-wider">Ações de bloqueio</p>
-                                    </div>
-                                    <ArrowUpRight size={14} className="text-gray-600 group-hover:text-blue-400 transition" />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
-                    </div>
-
-                    <div className="bg-white rounded-[40px] p-8 border border-gray-100 shadow-sm space-y-6">
-                        <h3 className="font-black uppercase tracking-widest text-[10px] text-gray-400">Integridade do Sistema</h3>
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm font-bold text-gray-600">Database Master</span>
-                                <CheckCircle size={16} className="text-green-500" />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm font-bold text-gray-600">TeamSpeak Query</span>
-                                <CheckCircle size={16} className="text-green-500" />
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm font-bold text-gray-600">Tibia API (Node.js)</span>
-                                <CheckCircle size={16} className="text-green-500" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            )}
         </div>
     );
 }

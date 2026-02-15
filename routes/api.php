@@ -62,6 +62,9 @@ Route::prefix('v1')->group(function () {
             Route::get('stats', [AdminApiController::class, 'stats']);
             Route::get('users', [AdminApiController::class, 'users']);
             Route::get('tickets', [AdminApiController::class, 'tickets']);
+            Route::get('orders', [AdminApiController::class, 'orders']);
+            Route::post('orders/{id}/confirm', [AdminApiController::class, 'confirmOrder']);
+            Route::post('orders/{id}/cancel', [AdminApiController::class, 'cancelOrder']);
         });
     });
 });

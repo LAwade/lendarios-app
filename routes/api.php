@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\CategoryApiController;
 use App\Http\Controllers\Api\OrderApiController;
 use App\Http\Controllers\Api\InvoiceApiController;
+use App\Http\Controllers\Api\DashboardApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,9 @@ Route::prefix('v1')->group(function () {
         Route::get('user', function (Request $request) {
             return $request->user();
         });
+
+        // Dashboard
+        Route::get('dashboard', [DashboardApiController::class, 'index']);
 
         // Pedidos
         Route::get('orders', [OrderApiController::class, 'index']);

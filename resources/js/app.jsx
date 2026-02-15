@@ -21,6 +21,7 @@ import DashboardPage from './pages/DashboardPage';
 import ServerDetailsPage from './pages/ServerDetailsPage';
 import TicketListPage from './pages/TicketListPage';
 import TicketDetailsPage from './pages/TicketDetailsPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,9 @@ function App() {
                                 <Route path="teamspeak/:id" element={<ServerDetailsPage />} />
                                 <Route path="tickets" element={<TicketListPage />} />
                                 <Route path="tickets/:id" element={<TicketDetailsPage />} />
+                                
+                                {/* Rota Admin */}
+                                <Route path="admin" element={<AdminDashboardPage />} />
                             </Route>
                         </Routes>
                     </BrowserRouter>

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\InvoiceApiController;
 use App\Http\Controllers\Api\DashboardApiController;
 use App\Http\Controllers\Api\TeamSpeakApiController;
 use App\Http\Controllers\Api\TicketApiController;
+use App\Http\Controllers\Api\AdminApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,7 +36,7 @@ Route::prefix('v1')->group(function () {
         });
         Route::post('logout', [App\Http\Controllers\AuthController::class, 'logout']);
 
-        // Dashboard
+        // Dashboard Cliente
         Route::get('dashboard', [DashboardApiController::class, 'index']);
 
         // TeamSpeak Management
@@ -55,5 +56,12 @@ Route::prefix('v1')->group(function () {
         Route::get('orders/{id}', [OrderApiController::class, 'show']);
         Route::get('invoices', [InvoiceApiController::class, 'index']);
         Route::get('invoices/{id}', [InvoiceApiController::class, 'show']);
+
+        // --- ÁREA ADMINISTRATIVA ---
+        Route::prefix('admin')->group(function () {
+            Route::get('stats', [AdminApiController::class, 'stats']);
+            Route::get('users', [AdminApiController::class, 'users']);
+            Route::get('tickets', [AdminApiController::class, 'tickets']);
+        });
     });
 });

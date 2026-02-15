@@ -98,4 +98,26 @@ class TeamSpeakApiController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Listar canais do servidor virtual
+     */
+    public function channels($id): JsonResponse
+    {
+        $server = TeamSpeakVirtualServer::with('master')->where('user_id', Auth::id())->find($id);
+        if (!$server) return response()->json(['success' => false, 'message' => 'Servidor não encontrado'], 404);
+
+        try {
+            $this->tsService->connect($server->master);
+            $this->tsService->selectServer($server->virtual_port);
+            $channels = $this->tsService->adapter()->channelList();
+
+            return response()->json([
+                'success' => true,
+                'data' => $channels['data'] ?? []
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }

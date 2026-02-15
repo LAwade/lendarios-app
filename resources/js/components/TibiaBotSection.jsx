@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { 
@@ -13,7 +13,11 @@ import {
     Zap,
     AlertCircle,
     UserMinus,
-    Trophy
+    Trophy,
+    Hash,
+    Layers,
+    Volume2,
+    Newspaper
 } from 'lucide-react';
 
 export default function TibiaBotSection({ serverId }) {
@@ -24,7 +28,15 @@ export default function TibiaBotSection({ serverId }) {
         guild_name: '',
         world: 'opentibia',
         hunted_level: 350,
-        alert_poke: false
+        alert_poke: false,
+        channel_friend_list: '',
+        channel_neutral_list: '',
+        channel_hunted_list: '',
+        channel_huntedmaker_list: '',
+        channel_ally_list: '',
+        channel_enemy_list: '',
+        channel_death_list: '',
+        channel_news_list: ''
     });
 
     const { data: botData, isLoading } = useQuery({
@@ -35,21 +47,50 @@ export default function TibiaBotSection({ serverId }) {
         }
     });
 
+    const { data: channels, isLoading: loadingChannels } = useQuery({
+        queryKey: ['ts-channels', serverId],
+        queryFn: async () => {
+            const response = await axios.get(`/api/v1/teamspeak/${serverId}/channels`);
+            return response.data.data;
+        },
+        enabled: isEditing
+    });
+
     const { data: listsData, isLoading: loadingLists } = useQuery({
         queryKey: ['tibiabot-lists', serverId],
         queryFn: async () => {
             const response = await axios.get(`/api/v1/teamspeak/${serverId}/tibiabot/lists`);
             return response.data.data;
         },
-        enabled: !!botData?.config
+        enabled: !!botData?.config && !isEditing
     });
+
+    useEffect(() => {
+        if (botData?.config) {
+            setFormData({
+                tibia_api_id: botData.config.tibia_api_id || '',
+                guild_name: botData.config.guild_name || '',
+                world: botData.config.world || 'opentibia',
+                hunted_level: botData.config.hunted_level || 350,
+                alert_poke: !!botData.config.alert_poke,
+                channel_friend_list: botData.config.channel_friend_list || '',
+                channel_neutral_list: botData.config.channel_neutral_list || '',
+                channel_hunted_list: botData.config.channel_hunted_list || '',
+                channel_huntedmaker_list: botData.config.channel_huntedmaker_list || '',
+                channel_ally_list: botData.config.channel_ally_list || '',
+                channel_enemy_list: botData.config.channel_enemy_list || '',
+                channel_death_list: botData.config.channel_death_list || '',
+                channel_news_list: botData.config.channel_news_list || ''
+            });
+        }
+    }, [botData]);
 
     const saveMutation = useMutation({
         mutationFn: (data) => axios.post(`/api/v1/teamspeak/${serverId}/tibiabot`, data),
         onSuccess: () => {
             setIsEditing(false);
             queryClient.invalidateQueries(['tibiabot', serverId]);
-            alert('Configurações salvas com sucesso!');
+            alert('Configurações do BOT salvas com sucesso!');
         }
     });
 
@@ -62,19 +103,6 @@ export default function TibiaBotSection({ serverId }) {
         saveMutation.mutate(formData);
     };
 
-    const startEditing = () => {
-        if (config) {
-            setFormData({
-                tibia_api_id: config.tibia_api_id,
-                guild_name: config.guild_name,
-                world: config.world,
-                hunted_level: config.hunted_level,
-                alert_poke: config.alert_poke
-            });
-        }
-        setIsEditing(true);
-    };
-
     if (!config && !isEditing) {
         return (
             <div className="bg-white rounded-3xl border border-dashed border-gray-200 p-12 text-center space-y-6">
@@ -83,7 +111,7 @@ export default function TibiaBotSection({ serverId }) {
                 </div>
                 <div className="max-w-sm mx-auto">
                     <h3 className="text-xl font-black text-gray-900">Configurar Tibia BOT</h3>
-                    <p className="text-gray-500 mt-2">Monitore sua guild, inimigos e mortes em tempo real diretamente no seu TeamSpeak.</p>
+                    <p className="text-gray-500 mt-2">Ative o monitoramento automático para o seu TeamSpeak agora mesmo.</p>
                 </div>
                 <button 
                     onClick={() => setIsEditing(true)}
@@ -97,7 +125,7 @@ export default function TibiaBotSection({ serverId }) {
 
     if (isEditing) {
         return (
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
                 <div className="p-8 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
                     <h3 className="font-black text-gray-900 uppercase tracking-widest text-sm flex items-center">
                         <Settings size={18} className="mr-2 text-blue-600" />
@@ -105,77 +133,110 @@ export default function TibiaBotSection({ serverId }) {
                     </h3>
                     <button onClick={() => setIsEditing(false)} className="text-xs font-bold text-gray-400 hover:text-gray-900 uppercase">Cancelar</button>
                 </div>
-                <form onSubmit={handleSave} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8 font-inter">
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Servidor / API</label>
-                        <select 
-                            value={formData.tibia_api_id}
-                            onChange={(e) => setFormData({...formData, tibia_api_id: e.target.value})}
-                            required
-                            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition appearance-none"
-                        >
-                            <option value="">Selecione um servidor...</option>
-                            {apis?.map(api => (
-                                <option key={api.id} value={api.id}>{api.server_name}</option>
-                            ))}
-                        </select>
+                <form onSubmit={handleSave} className="p-8 space-y-10 font-inter">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-6">
+                            <h4 className="text-xs font-black text-blue-600 uppercase tracking-widest border-b pb-2">Informações da Guild</h4>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Servidor / API</label>
+                                    <select 
+                                        value={formData.tibia_api_id}
+                                        onChange={(e) => setFormData({...formData, tibia_api_id: e.target.value})}
+                                        required
+                                        className="w-full mt-1 px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
+                                    >
+                                        <option value="">Selecione...</option>
+                                        {apis?.map(api => (
+                                            <option key={api.id} value={api.id}>{api.server_name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome da Guild</label>
+                                    <input 
+                                        type="text"
+                                        value={formData.guild_name}
+                                        onChange={(e) => setFormData({...formData, guild_name: e.target.value})}
+                                        required
+                                        className="w-full mt-1 px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Mundo (World)</label>
+                                        <input 
+                                            type="text"
+                                            value={formData.world}
+                                            onChange={(e) => setFormData({...formData, world: e.target.value})}
+                                            required
+                                            className="w-full mt-1 px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Level Hunted</label>
+                                        <input 
+                                            type="number"
+                                            value={formData.hunted_level}
+                                            onChange={(e) => setFormData({...formData, hunted_level: e.target.value})}
+                                            className="w-full mt-1 px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex items-center space-x-3 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                    <input 
+                                        type="checkbox"
+                                        id="alert_poke"
+                                        checked={formData.alert_poke}
+                                        onChange={(e) => setFormData({...formData, alert_poke: e.target.checked})}
+                                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                    />
+                                    <label htmlFor="alert_poke" className="text-xs font-bold text-blue-900 cursor-pointer">Ativar Pokes de Hunted Online</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <h4 className="text-xs font-black text-blue-600 uppercase tracking-widest border-b pb-2">Mapeamento de Salas (TS3)</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {[
+                                    { id: 'channel_friend_list', label: 'Friends List', icon: <Users size={14} /> },
+                                    { id: 'channel_hunted_list', label: 'Hunted List', icon: <Sword size={14} /> },
+                                    { id: 'channel_neutral_list', label: 'Neutral List', icon: <Hash size={14} /> },
+                                    { id: 'channel_huntedmaker_list', label: 'Hunted Makers', icon: <UserMinus size={14} /> },
+                                    { id: 'channel_ally_list', label: 'Ally List', icon: <Shield size={14} /> },
+                                    { id: 'channel_enemy_list', label: 'Enemy List', icon: <Zap size={14} /> },
+                                    { id: 'channel_death_list', label: 'Death Log', icon: <Skull size={14} /> },
+                                    { id: 'channel_news_list', label: 'News List', icon: <Newspaper size={14} /> },
+                                ].map(chan => (
+                                    <div key={chan.id}>
+                                        <label className="flex items-center text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">
+                                            {chan.icon} <span className="ml-1">{chan.label}</span>
+                                        </label>
+                                        <select 
+                                            value={formData[chan.id]}
+                                            onChange={(e) => setFormData({...formData, [chan.id]: e.target.value})}
+                                            className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none text-xs font-bold text-gray-900 transition"
+                                        >
+                                            <option value="">Desativado</option>
+                                            {channels?.map(c => (
+                                                <option key={c.cid} value={c.cid}>{c.channel_name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Nome da sua Guild</label>
-                        <input 
-                            type="text"
-                            value={formData.guild_name}
-                            onChange={(e) => setFormData({...formData, guild_name: e.target.value})}
-                            required
-                            placeholder="ex: Lendarios Team"
-                            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Mundo (World)</label>
-                        <input 
-                            type="text"
-                            value={formData.world}
-                            onChange={(e) => setFormData({...formData, world: e.target.value})}
-                            required
-                            placeholder="ex: Antica ou Nome do OT"
-                            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Level Mínimo Hunted</label>
-                        <input 
-                            type="number"
-                            value={formData.hunted_level}
-                            onChange={(e) => setFormData({...formData, hunted_level: e.target.value})}
-                            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
-                        />
-                    </div>
-
-                    <div className="md:col-span-2 flex items-center space-x-4 bg-blue-50 p-6 rounded-3xl border border-blue-100">
-                        <input 
-                            type="checkbox"
-                            id="alert_poke"
-                            checked={formData.alert_poke}
-                            onChange={(e) => setFormData({...formData, alert_poke: e.target.checked})}
-                            className="w-5 h-5 text-blue-600 rounded-lg focus:ring-blue-500"
-                        />
-                        <label htmlFor="alert_poke" className="text-sm font-bold text-blue-900 cursor-pointer">
-                            Ativar Alertas de Poke no TeamSpeak para Hunteds Online
-                        </label>
-                    </div>
-
-                    <div className="md:col-span-2 pt-4 flex justify-end">
+                    <div className="pt-6 border-t border-gray-50 flex justify-end">
                         <button 
                             type="submit"
                             disabled={saveMutation.isPending}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition shadow-xl shadow-blue-200 flex items-center space-x-2"
                         >
                             {saveMutation.isPending ? <RefreshCw className="animate-spin" size={18} /> : <Save size={18} />}
-                            <span>Salvar BOT</span>
+                            <span>Salvar Configuração</span>
                         </button>
                     </div>
                 </form>
@@ -208,10 +269,10 @@ export default function TibiaBotSection({ serverId }) {
                 </div>
                 <div className="relative z-10 flex gap-4">
                     <button 
-                        onClick={startEditing}
-                        className="bg-white/10 hover:bg-white/20 text-white px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition border border-white/10"
+                        onClick={() => setIsEditing(true)}
+                        className="bg-white text-gray-900 px-6 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition hover:bg-gray-100"
                     >
-                        Editar Config
+                        Configurar Salas
                     </button>
                 </div>
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[100px] rounded-full -mr-32 -mt-32"></div>
@@ -232,14 +293,14 @@ export default function TibiaBotSection({ serverId }) {
                     <div className="p-4 flex-grow overflow-y-auto max-h-[500px] space-y-2">
                         {loadingLists ? (
                             [1,2,3,4].map(n => <div key={n} className="h-12 bg-gray-50 rounded-xl animate-pulse"></div>)
-                        ) : listsData?.friends?.length === 0 ? (
+                        ) : !listsData?.friends?.length ? (
                             <p className="text-center py-10 text-xs text-gray-400 italic">Nenhum jogador encontrado.</p>
                         ) : (
                             listsData?.friends?.map((player, i) => (
                                 <div key={i} className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-2xl transition group">
                                     <div className="flex items-center space-x-3">
                                         <div className="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-[10px] font-black">
-                                            {player.vocation.substring(0,2)}
+                                            {player.vocation ? player.vocation.substring(0,2) : '??'}
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-gray-900">{player.name}</p>
@@ -266,14 +327,14 @@ export default function TibiaBotSection({ serverId }) {
                     <div className="p-4 flex-grow overflow-y-auto max-h-[500px] space-y-2">
                          {loadingLists ? (
                             [1,2,3,4].map(n => <div key={n} className="h-12 bg-gray-50 rounded-xl animate-pulse"></div>)
-                        ) : listsData?.neutrals?.filter(p => p.level >= config.hunted_level).length === 0 ? (
+                        ) : !listsData?.neutrals?.filter(p => p.level >= config.hunted_level).length ? (
                             <p className="text-center py-10 text-xs text-gray-400 italic">Nenhum hunted online.</p>
                         ) : (
                             listsData?.neutrals?.filter(p => p.level >= config.hunted_level).map((player, i) => (
                                 <div key={i} className="flex items-center justify-between p-3 hover:bg-red-50/50 rounded-2xl transition group border border-transparent hover:border-red-100">
                                     <div className="flex items-center space-x-3">
                                         <div className="w-8 h-8 bg-red-100 text-red-600 rounded-lg flex items-center justify-center text-[10px] font-black">
-                                            {player.vocation.substring(0,2)}
+                                            {player.vocation ? player.vocation.substring(0,2) : '??'}
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-gray-900">{player.name}</p>
@@ -298,7 +359,7 @@ export default function TibiaBotSection({ serverId }) {
                     <div className="p-4 flex-grow overflow-y-auto max-h-[500px] space-y-3">
                         {loadingLists ? (
                             [1,2,3,4].map(n => <div key={n} className="h-12 bg-gray-50 rounded-xl animate-pulse"></div>)
-                        ) : listsData?.deaths?.length === 0 ? (
+                        ) : !listsData?.deaths?.length ? (
                             <p className="text-center py-10 text-xs text-gray-400 italic">Nenhuma morte recente.</p>
                         ) : (
                             listsData?.deaths?.map((death, i) => (
@@ -307,7 +368,7 @@ export default function TibiaBotSection({ serverId }) {
                                         <p className="text-xs font-black text-gray-900 leading-tight">{death.name}</p>
                                         <span className="text-[9px] font-bold text-gray-400 uppercase">{new Date(death.hours).toLocaleTimeString()}</span>
                                     </div>
-                                    <p className="text-[10px] text-gray-500 leading-relaxed italic">{death.reason.replace(/<[^>]*>?/gm, '')}</p>
+                                    <p className="text-[10px] text-gray-500 leading-relaxed italic">{death.reason?.replace(/<[^>]*>?/gm, '')}</p>
                                 </div>
                             ))
                         )}

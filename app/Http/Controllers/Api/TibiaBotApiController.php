@@ -43,6 +43,14 @@ class TibiaBotApiController extends Controller
             'world' => 'required|string',
             'hunted_level' => 'integer',
             'alert_poke' => 'boolean',
+            'channel_friend_list' => 'nullable|integer',
+            'channel_neutral_list' => 'nullable|integer',
+            'channel_hunted_list' => 'nullable|integer',
+            'channel_huntedmaker_list' => 'nullable|integer',
+            'channel_ally_list' => 'nullable|integer',
+            'channel_enemy_list' => 'nullable|integer',
+            'channel_death_list' => 'nullable|integer',
+            'channel_news_list' => 'nullable|integer',
         ]);
 
         $config = TibiaBotConfig::updateOrCreate(

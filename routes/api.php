@@ -42,6 +42,7 @@ Route::prefix('v1')->group(function () {
 
         // TeamSpeak Management
         Route::get('teamspeak/{id}', [TeamSpeakApiController::class, 'show']);
+        Route::get('teamspeak/{id}/channels', [TeamSpeakApiController::class, 'channels']);
         Route::post('teamspeak/{id}/token', [TeamSpeakApiController::class, 'generateToken']);
         Route::post('teamspeak/{id}/template', [TeamSpeakApiController::class, 'applyTemplate']);
 

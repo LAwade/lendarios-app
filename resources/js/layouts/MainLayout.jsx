@@ -3,6 +3,7 @@ import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, X, Plus, Minus, Trash2, LogOut, LayoutDashboard, LifeBuoy } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
 
 export default function MainLayout() {
     const { cart, cartCount, cartTotal, removeFromCart, updateQuantity } = useCart();
@@ -21,7 +22,7 @@ export default function MainLayout() {
             <header className="bg-lendarios-dark text-white shadow-lg sticky top-0 z-50">
                 <div className="container mx-auto px-4 py-4 flex justify-between items-center">
                     <Link to="/" className="flex items-center space-x-2">
-                        <img src="/imagem/lendariosteam-branco.png" alt="Lendarios" className="h-8" />
+                        <Logo light={true} />
                     </Link>
 
                     <nav className="hidden md:flex space-x-8">
@@ -184,7 +185,7 @@ export default function MainLayout() {
 
             <footer className="bg-gray-900 text-gray-400 py-20 border-t border-gray-800 font-inter">
                 <div className="container mx-auto px-4 text-center space-y-8">
-                    <img src="/imagem/lendariosteam-branco.png" alt="Lendarios" className="h-8 mx-auto opacity-30" />
+                    <Logo light={true} className="mx-auto opacity-30 h-10" />
                     <p className="text-sm max-w-lg mx-auto leading-relaxed font-medium">
                         Lendários TeaM &copy; {new Date().getFullYear()}. Tecnologia de ponta para 
                         comunidades gamer, gerenciamento de TeamSpeak 3 e inteligência Tibia.

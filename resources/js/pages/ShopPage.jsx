@@ -98,10 +98,10 @@ export default function ShopPage() {
                                         <h3 className="text-xl font-bold text-gray-900 mb-2">{product.name}</h3>
                                         <div className="text-gray-500 text-sm mb-6 flex-grow">
                                             <ul className="space-y-2">
-                                                {product.description?.split(';').map((spec, i) => (
+                                                {product.description?.split('\n').filter(Boolean).map((spec, i) => (
                                                     <li key={i} className="flex items-start space-x-2">
-                                                        <div className="h-1.5 w-1.5 bg-blue-500 rounded-full mt-1.5"></div>
-                                                        <span>{spec}</span>
+                                                        <Check size={14} className="text-green-500 mt-0.5 flex-shrink-0" />
+                                                        <span className="text-gray-600">{spec.replace(/^[-*•]\s*/, '')}</span>
                                                     </li>
                                                 ))}
                                             </ul>

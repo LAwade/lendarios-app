@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\Item;
+use App\Models\Product;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
+class OrderApiController extends Controller
+{
+    /**
+     * Listar pedidos do usuário autenticado
+     */
+    public function index(): JsonResponse
+    {
+        $user = Auth::user();
+        
+        $orders = Order::with(['status', 'itens.product'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders
+        ]);
+    }
+
+    /**
+     * Criar um novo pedido (Checkout)
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        try {
+            return DB::transaction(function () use ($request) {
+                $order = new Order();
+                $order->user_id = Auth::id();
+                $order->status_id = 2; // Pendente/Aguardando pagamento
+                $order->save();
+
+                foreach ($request->items as $itemData) {
+                    $item = new Item();
+                    $item->order_id = $order->id;
+                    $item->product_id = $itemData['product_id'];
+                    $item->quantity = $itemData['quantity'];
+                    $item->save();
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Pedido criado com sucesso!',
+                    'order_id' => $order->id
+                ], 201);
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao processar pedido: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Detalhes de um pedido específico
+     */
+    public function show($id): JsonResponse
+    {
+        $order = Order::with(['status', 'itens.product'])
+            ->where('user_id', Auth::id())
+            ->find($id);
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pedido não encontrado ou acesso negado'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $order
+        ]);
+    }
+}

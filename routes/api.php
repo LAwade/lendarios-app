@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\CategoryApiController;
 use App\Http\Controllers\Api\OrderApiController;
 use App\Http\Controllers\Api\InvoiceApiController;
 use App\Http\Controllers\Api\DashboardApiController;
+use App\Http\Controllers\Api\TeamSpeakApiController;
+use App\Http\Controllers\Api\TicketApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,16 +33,26 @@ Route::prefix('v1')->group(function () {
         Route::get('user', function (Request $request) {
             return $request->user();
         });
+        Route::post('logout', [App\Http\Controllers\AuthController::class, 'logout']);
 
         // Dashboard
         Route::get('dashboard', [DashboardApiController::class, 'index']);
 
-        // Pedidos
+        // TeamSpeak Management
+        Route::get('teamspeak/{id}', [TeamSpeakApiController::class, 'show']);
+        Route::post('teamspeak/{id}/token', [TeamSpeakApiController::class, 'generateToken']);
+        Route::post('teamspeak/{id}/template', [TeamSpeakApiController::class, 'applyTemplate']);
+
+        // Tickets de Suporte
+        Route::get('tickets', [TicketApiController::class, 'index']);
+        Route::post('tickets', [TicketApiController::class, 'store']);
+        Route::get('tickets/{id}', [TicketApiController::class, 'show']);
+        Route::post('tickets/{id}/reply', [TicketApiController::class, 'reply']);
+
+        // Pedidos & Faturas
         Route::get('orders', [OrderApiController::class, 'index']);
         Route::post('orders', [OrderApiController::class, 'store']);
         Route::get('orders/{id}', [OrderApiController::class, 'show']);
-
-        // Faturas
         Route::get('invoices', [InvoiceApiController::class, 'index']);
         Route::get('invoices/{id}', [InvoiceApiController::class, 'show']);
     });

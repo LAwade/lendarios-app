@@ -18,6 +18,9 @@ import CheckoutPage from './pages/CheckoutPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import ServerDetailsPage from './pages/ServerDetailsPage';
+import TicketListPage from './pages/TicketListPage';
+import TicketDetailsPage from './pages/TicketDetailsPage';
 
 const queryClient = new QueryClient();
 
@@ -35,6 +38,9 @@ function App() {
                                 <Route path="login" element={<LoginPage />} />
                                 <Route path="register" element={<RegisterPage />} />
                                 <Route path="dashboard" element={<DashboardPage />} />
+                                <Route path="teamspeak/:id" element={<ServerDetailsPage />} />
+                                <Route path="tickets" element={<TicketListPage />} />
+                                <Route path="tickets/:id" element={<TicketDetailsPage />} />
                             </Route>
                         </Routes>
                     </BrowserRouter>

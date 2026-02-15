@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CartProvider } from './context/CartContext';
+import { AuthProvider } from './context/AuthContext';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
@@ -14,23 +15,29 @@ import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
 import ShopPage from './pages/ShopPage';
 import CheckoutPage from './pages/CheckoutPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 const queryClient = new QueryClient();
 
 function App() {
     return (
         <QueryClientProvider client={queryClient}>
-            <CartProvider>
-                <BrowserRouter>
-                    <Routes>
-                        <Route path="/" element={<MainLayout />}>
-                            <Route index element={<HomePage />} />
-                            <Route path="shop" element={<ShopPage />} />
-                            <Route path="checkout" element={<CheckoutPage />} />
-                        </Route>
-                    </Routes>
-                </BrowserRouter>
-            </CartProvider>
+            <AuthProvider>
+                <CartProvider>
+                    <BrowserRouter>
+                        <Routes>
+                            <Route path="/" element={<MainLayout />}>
+                                <Route index element={<HomePage />} />
+                                <Route path="shop" element={<ShopPage />} />
+                                <Route path="checkout" element={<CheckoutPage />} />
+                                <Route path="login" element={<LoginPage />} />
+                                <Route path="register" element={<RegisterPage />} />
+                            </Route>
+                        </Routes>
+                    </BrowserRouter>
+                </CartProvider>
+            </AuthProvider>
         </QueryClientProvider>
     );
 }

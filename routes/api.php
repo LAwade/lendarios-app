@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\CategoryApiController;
 use App\Http\Controllers\Api\OrderApiController;
+use App\Http\Controllers\Api\InvoiceApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,5 +35,9 @@ Route::prefix('v1')->group(function () {
         Route::get('orders', [OrderApiController::class, 'index']);
         Route::post('orders', [OrderApiController::class, 'store']);
         Route::get('orders/{id}', [OrderApiController::class, 'show']);
+
+        // Faturas
+        Route::get('invoices', [InvoiceApiController::class, 'index']);
+        Route::get('invoices/{id}', [InvoiceApiController::class, 'show']);
     });
 });

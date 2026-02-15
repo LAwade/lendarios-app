@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\DashboardApiController;
 use App\Http\Controllers\Api\TeamSpeakApiController;
 use App\Http\Controllers\Api\TicketApiController;
 use App\Http\Controllers\Api\AdminApiController;
+use App\Http\Controllers\Api\TibiaBotApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +44,11 @@ Route::prefix('v1')->group(function () {
         Route::get('teamspeak/{id}', [TeamSpeakApiController::class, 'show']);
         Route::post('teamspeak/{id}/token', [TeamSpeakApiController::class, 'generateToken']);
         Route::post('teamspeak/{id}/template', [TeamSpeakApiController::class, 'applyTemplate']);
+
+        // Tibia Bot
+        Route::get('teamspeak/{id}/tibiabot', [TibiaBotApiController::class, 'show']);
+        Route::post('teamspeak/{id}/tibiabot', [TibiaBotApiController::class, 'store']);
+        Route::get('teamspeak/{id}/tibiabot/lists', [TibiaBotApiController::class, 'fetchLists']);
 
         // Tickets de Suporte
         Route::get('tickets', [TicketApiController::class, 'index']);

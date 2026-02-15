@@ -20,7 +20,10 @@ import {
     Settings,
     ShieldAlert,
     Save,
-    Loader2
+    Loader2,
+    Globe,
+    Terminal,
+    Key
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -55,6 +58,10 @@ export default function AdminDashboardPage() {
 
     // Server Query Settings Logic
     const [querySettings, setQuerySettings] = useState({
+        host: '',
+        query_port: 10011,
+        username: 'serveradmin',
+        password: '',
         flood_commands: 10,
         flood_time: 3,
         ban_time: 600
@@ -70,13 +77,24 @@ export default function AdminDashboardPage() {
     });
 
     useEffect(() => {
-        if (settingsData) setQuerySettings(settingsData);
+        if (settingsData) {
+            setQuerySettings({
+                host: settingsData.master?.host || '',
+                query_port: settingsData.master?.query_port || 10011,
+                username: settingsData.master?.username || 'serveradmin',
+                password: '', // Password stays hidden
+                flood_commands: settingsData.flood?.flood_commands || 10,
+                flood_time: settingsData.flood?.flood_time || 3,
+                ban_time: settingsData.flood?.ban_time || 600
+            });
+        }
     }, [settingsData]);
 
     const updateSettingsMutation = useMutation({
         mutationFn: (data) => axios.post('/api/v1/admin/query-settings', data),
-        onSuccess: () => {
-            alert('Configurações atualizadas com sucesso!');
+        onSuccess: (res) => {
+            alert(res.data.message);
+            queryClient.invalidateQueries(['query-settings']);
         }
     });
 
@@ -205,21 +223,87 @@ export default function AdminDashboardPage() {
             )}
 
             {activeTab === 'settings' && (
-                <div className="max-w-4xl">
+                <div className="space-y-8 max-w-5xl">
+                    {/* Master Connection Info */}
                     <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
                         <div className="p-10 border-b border-gray-50 flex items-center space-x-4 bg-gray-50/30">
                             <div className="p-3 bg-blue-600 text-white rounded-2xl">
-                                <Settings size={24} />
+                                <Globe size={24} />
                             </div>
                             <div>
-                                <h2 className="font-black text-gray-900 uppercase tracking-widest text-lg">Server Query Flood</h2>
-                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Configurações globais da instância TS3</p>
+                                <h2 className="font-black text-gray-900 uppercase tracking-widest text-lg">Conexão Master TeamSpeak</h2>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Configurações de Acesso ao Servidor de Query</p>
                             </div>
                         </div>
                         
-                        <div className="p-10 space-y-8 text-inter">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                <div className="space-y-4">
+                        <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-8 text-inter">
+                            <div className="space-y-2">
+                                <label className="flex items-center text-xs font-black text-gray-400 uppercase tracking-widest">
+                                    <Globe size={14} className="mr-2" /> IP ou Host do Servidor
+                                </label>
+                                <input 
+                                    type="text"
+                                    placeholder="ex: 127.0.0.1 ou ts.lendarios.com"
+                                    value={querySettings.host}
+                                    onChange={(e) => setQuerySettings({...querySettings, host: e.target.value})}
+                                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="flex items-center text-xs font-black text-gray-400 uppercase tracking-widest">
+                                    <Terminal size={14} className="mr-2" /> Porta Query
+                                </label>
+                                <input 
+                                    type="number"
+                                    value={querySettings.query_port}
+                                    onChange={(e) => setQuerySettings({...querySettings, query_port: e.target.value})}
+                                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="flex items-center text-xs font-black text-gray-400 uppercase tracking-widest">
+                                    <Users size={14} className="mr-2" /> Usuário Query
+                                </label>
+                                <input 
+                                    type="text"
+                                    value={querySettings.username}
+                                    onChange={(e) => setQuerySettings({...querySettings, username: e.target.value})}
+                                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="flex items-center text-xs font-black text-gray-400 uppercase tracking-widest">
+                                    <Key size={14} className="mr-2" /> Senha Query
+                                </label>
+                                <input 
+                                    type="password"
+                                    placeholder="••••••••••••"
+                                    value={querySettings.password}
+                                    onChange={(e) => setQuerySettings({...querySettings, password: e.target.value})}
+                                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Flood Control Settings */}
+                    <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="p-10 border-b border-gray-50 flex items-center space-x-4 bg-gray-50/30">
+                            <div className="p-3 bg-orange-500 text-white rounded-2xl">
+                                <ShieldAlert size={24} />
+                            </div>
+                            <div>
+                                <h2 className="font-black text-gray-900 uppercase tracking-widest text-lg">Server Query Flood</h2>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Prevenção contra spam de comandos</p>
+                            </div>
+                        </div>
+                        
+                        <div className="p-10 space-y-10 text-inter">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                <div className="space-y-3">
                                     <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Comandos p/ Flood</label>
                                     <input 
                                         type="number"
@@ -227,50 +311,44 @@ export default function AdminDashboardPage() {
                                         onChange={(e) => setQuerySettings({...querySettings, flood_commands: e.target.value})}
                                         className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
                                     />
-                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Número máximo de comandos permitidos antes de disparar o sistema de flood.</p>
+                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed italic">Número de comandos permitidos.</p>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Tempo de Flood (Segundos)</label>
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Tempo de Janela (s)</label>
                                     <input 
                                         type="number"
                                         value={querySettings.flood_time}
                                         onChange={(e) => setQuerySettings({...querySettings, flood_time: e.target.value})}
                                         className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
                                     />
-                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Janela de tempo para o cálculo dos comandos enviados.</p>
+                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed italic">Tempo em segundos para reset.</p>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Tempo de Ban (Segundos)</label>
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Duração Ban (s)</label>
                                     <input 
                                         type="number"
                                         value={querySettings.ban_time}
                                         onChange={(e) => setQuerySettings({...querySettings, ban_time: e.target.value})}
                                         className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
                                     />
-                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Duração do banimento automático de IP em caso de flood detectado.</p>
-                                </div>
-
-                                <div className="bg-orange-50 p-6 rounded-[32px] border border-orange-100 flex items-start space-x-4">
-                                    <div className="p-2 bg-orange-100 text-orange-600 rounded-xl">
-                                        <ShieldAlert size={20} />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <p className="text-xs font-black text-orange-800 uppercase tracking-widest">Atenção</p>
-                                        <p className="text-[10px] text-orange-600 font-medium leading-relaxed">Alterar estas configurações afeta todos os servidores virtuais da instância. Use com cautela.</p>
-                                    </div>
+                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed italic">Tempo de bloqueio do IP.</p>
                                 </div>
                             </div>
 
-                            <div className="pt-6 border-t border-gray-50 flex justify-end">
+                            <div className="pt-6 border-t border-gray-50 flex justify-between items-center">
+                                <div className="flex items-center text-orange-600 space-x-2">
+                                    <ShieldAlert size={16} />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Cuidado: Alterações globais!</span>
+                                </div>
                                 <button 
                                     onClick={() => updateSettingsMutation.mutate(querySettings)}
                                     disabled={updateSettingsMutation.isPending}
-                                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition shadow-xl shadow-blue-200 disabled:opacity-50"
+                                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-12 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition shadow-xl shadow-blue-200 disabled:opacity-50"
                                 >
                                     {updateSettingsMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                                    <span>Salvar Alterações</span>
+                                    <span>Salvar Configuração Master</span>
                                 </button>
                             </div>
                         </div>

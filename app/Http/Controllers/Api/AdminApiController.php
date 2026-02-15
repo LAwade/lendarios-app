@@ -50,25 +50,39 @@ class AdminApiController extends Controller
     }
 
     /**
-     * Obter configurações da instância Server Query (Flood settings)
+     * Obter configurações da instância Server Query (Master + Flood settings)
      */
     public function getQuerySettings(\App\Services\TeamSpeakService $tsService): JsonResponse
     {
         try {
-            // Busca o primeiro servidor master configurado para pegar a instância
             $master = \App\Models\TeamSpeakServerMaster::first();
-            if (!$master) throw new \Exception("Nenhum servidor master configurado.");
+            
+            $data = [
+                'master' => $master,
+                'flood' => [
+                    'flood_commands' => 10,
+                    'flood_time' => 3,
+                    'ban_time' => 600,
+                ]
+            ];
 
-            $tsService->connect($master);
-            $info = $tsService->adapter()->instanceInfo();
+            if ($master) {
+                try {
+                    $tsService->connect($master);
+                    $info = $tsService->adapter()->instanceInfo();
+                    $data['flood'] = [
+                        'flood_commands' => $info['data']['serverinstance_serverquery_flood_commands'] ?? 10,
+                        'flood_time' => $info['data']['serverinstance_serverquery_flood_time'] ?? 3,
+                        'ban_time' => $info['data']['serverinstance_serverquery_ban_time'] ?? 600,
+                    ];
+                } catch (\Exception $e) {
+                    $data['connection_error'] = $e->getMessage();
+                }
+            }
 
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'flood_commands' => $info['data']['serverinstance_serverquery_flood_commands'] ?? 10,
-                    'flood_time' => $info['data']['serverinstance_serverquery_flood_time'] ?? 3,
-                    'ban_time' => $info['data']['serverinstance_serverquery_ban_time'] ?? 600,
-                ]
+                'data' => $data
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -76,30 +90,50 @@ class AdminApiController extends Controller
     }
 
     /**
-     * Atualizar configurações do Server Query
+     * Atualizar configurações do Server Query (Master + Flood)
      */
     public function updateQuerySettings(Request $request, \App\Services\TeamSpeakService $tsService): JsonResponse
     {
         $request->validate([
+            'host' => 'required|string',
+            'query_port' => 'required|integer',
+            'username' => 'required|string',
+            'password' => 'nullable|string',
             'flood_commands' => 'required|integer',
             'flood_time' => 'required|integer',
             'ban_time' => 'required|integer',
         ]);
 
         try {
-            $master = \App\Models\TeamSpeakServerMaster::first();
-            if (!$master) throw new \Exception("Nenhum servidor master configurado.");
+            $master = \App\Models\TeamSpeakServerMaster::first() ?: new \App\Models\TeamSpeakServerMaster();
+            
+            $master->name = 'Servidor Principal';
+            $master->host = $request->host;
+            $master->query_port = $request->query_port;
+            $master->username = $request->username;
+            if ($request->password) {
+                $master->password = $request->password;
+            }
+            $master->is_active = true;
+            $master->save();
 
-            $tsService->connect($master);
-            $data = [
-                'serverinstance_serverquery_flood_commands' => $request->flood_commands,
-                'serverinstance_serverquery_flood_time' => $request->flood_time,
-                'serverinstance_serverquery_ban_time' => $request->ban_time,
-            ];
+            // Tentar aplicar configurações de flood se a conexão funcionar
+            try {
+                $tsService->connect($master);
+                $floodData = [
+                    'serverinstance_serverquery_flood_commands' => $request->flood_commands,
+                    'serverinstance_serverquery_flood_time' => $request->flood_time,
+                    'serverinstance_serverquery_ban_time' => $request->ban_time,
+                ];
+                $tsService->adapter()->instanceEdit($floodData);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => true, 
+                    'message' => 'Dados do servidor salvos, mas não foi possível conectar para atualizar o flood: ' . $e->getMessage()
+                ]);
+            }
 
-            $tsService->adapter()->instanceEdit($data);
-
-            return response()->json(['success' => true, 'message' => 'Configurações do Server Query atualizadas com sucesso!']);
+            return response()->json(['success' => true, 'message' => 'Configurações atualizadas com sucesso!']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

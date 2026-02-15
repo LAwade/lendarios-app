@@ -15,7 +15,9 @@ class TeamSpeakService
 
     public function __construct()
     {
-        $this->ts3 = new \ts3admin();
+        // A versão do ts3admin legado exige host e porta no construtor
+        // Usamos valores placeholder e sobrescrevemos no connect()
+        $this->ts3 = new \ts3admin('127.0.0.1', 10011);
     }
 
     /**

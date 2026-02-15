@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { 
@@ -16,7 +16,11 @@ import {
     ShoppingBag,
     Check,
     X,
-    ExternalLink
+    ExternalLink,
+    Settings,
+    ShieldAlert,
+    Save,
+    Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -24,6 +28,7 @@ export default function AdminDashboardPage() {
     const [activeTab, setActiveTab] = useState('overview');
     const queryClient = useQueryClient();
 
+    // Stats, Users, Orders Queries
     const { data: adminData, isLoading } = useQuery({
         queryKey: ['admin-stats'],
         queryFn: async () => {
@@ -45,6 +50,33 @@ export default function AdminDashboardPage() {
         queryFn: async () => {
             const response = await axios.get('/api/v1/admin/orders');
             return response.data.data;
+        }
+    });
+
+    // Server Query Settings Logic
+    const [querySettings, setQuerySettings] = useState({
+        flood_commands: 10,
+        flood_time: 3,
+        ban_time: 600
+    });
+
+    const { data: settingsData, isLoading: loadingSettings } = useQuery({
+        queryKey: ['query-settings'],
+        queryFn: async () => {
+            const response = await axios.get('/api/v1/admin/query-settings');
+            return response.data.data;
+        },
+        enabled: activeTab === 'settings'
+    });
+
+    useEffect(() => {
+        if (settingsData) setQuerySettings(settingsData);
+    }, [settingsData]);
+
+    const updateSettingsMutation = useMutation({
+        mutationFn: (data) => axios.post('/api/v1/admin/query-settings', data),
+        onSuccess: () => {
+            alert('Configurações atualizadas com sucesso!');
         }
     });
 
@@ -76,7 +108,8 @@ export default function AdminDashboardPage() {
                         { id: 'overview', label: 'Visão Geral', icon: <ArrowUpRight size={16} /> },
                         { id: 'orders', label: 'Pedidos', icon: <ShoppingBag size={16} /> },
                         { id: 'users', label: 'Clientes', icon: <Users size={16} /> },
-                        { id: 'tickets', label: 'Tickets', icon: <MessageSquare size={16} /> }
+                        { id: 'tickets', label: 'Tickets', icon: <MessageSquare size={16} /> },
+                        { id: 'settings', label: 'Server Query', icon: <Settings size={16} /> }
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -169,6 +202,80 @@ export default function AdminDashboardPage() {
                         </div>
                     </div>
                 </>
+            )}
+
+            {activeTab === 'settings' && (
+                <div className="max-w-4xl">
+                    <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden">
+                        <div className="p-10 border-b border-gray-50 flex items-center space-x-4 bg-gray-50/30">
+                            <div className="p-3 bg-blue-600 text-white rounded-2xl">
+                                <Settings size={24} />
+                            </div>
+                            <div>
+                                <h2 className="font-black text-gray-900 uppercase tracking-widest text-lg">Server Query Flood</h2>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Configurações globais da instância TS3</p>
+                            </div>
+                        </div>
+                        
+                        <div className="p-10 space-y-8 text-inter">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Comandos p/ Flood</label>
+                                    <input 
+                                        type="number"
+                                        value={querySettings.flood_commands}
+                                        onChange={(e) => setQuerySettings({...querySettings, flood_commands: e.target.value})}
+                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
+                                    />
+                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Número máximo de comandos permitidos antes de disparar o sistema de flood.</p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Tempo de Flood (Segundos)</label>
+                                    <input 
+                                        type="number"
+                                        value={querySettings.flood_time}
+                                        onChange={(e) => setQuerySettings({...querySettings, flood_time: e.target.value})}
+                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
+                                    />
+                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Janela de tempo para o cálculo dos comandos enviados.</p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest">Tempo de Ban (Segundos)</label>
+                                    <input 
+                                        type="number"
+                                        value={querySettings.ban_time}
+                                        onChange={(e) => setQuerySettings({...querySettings, ban_time: e.target.value})}
+                                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-600 outline-none font-bold text-gray-900 transition"
+                                    />
+                                    <p className="text-[10px] text-gray-400 font-medium leading-relaxed">Duração do banimento automático de IP em caso de flood detectado.</p>
+                                </div>
+
+                                <div className="bg-orange-50 p-6 rounded-[32px] border border-orange-100 flex items-start space-x-4">
+                                    <div className="p-2 bg-orange-100 text-orange-600 rounded-xl">
+                                        <ShieldAlert size={20} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-xs font-black text-orange-800 uppercase tracking-widest">Atenção</p>
+                                        <p className="text-[10px] text-orange-600 font-medium leading-relaxed">Alterar estas configurações afeta todos os servidores virtuais da instância. Use com cautela.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-6 border-t border-gray-50 flex justify-end">
+                                <button 
+                                    onClick={() => updateSettingsMutation.mutate(querySettings)}
+                                    disabled={updateSettingsMutation.isPending}
+                                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition shadow-xl shadow-blue-200 disabled:opacity-50"
+                                >
+                                    {updateSettingsMutation.isPending ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                    <span>Salvar Alterações</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {activeTab === 'orders' && (

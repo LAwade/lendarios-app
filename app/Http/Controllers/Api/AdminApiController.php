@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\Ticket;
 use App\Models\TeamSpeakVirtualServer;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AdminApiController extends Controller
@@ -46,6 +47,62 @@ class AdminApiController extends Controller
     {
         $tickets = Ticket::with('user')->orderBy('priority', 'desc')->orderBy('created_at', 'desc')->get();
         return response()->json(['success' => true, 'data' => $tickets]);
+    }
+
+    /**
+     * Obter configurações da instância Server Query (Flood settings)
+     */
+    public function getQuerySettings(\App\Services\TeamSpeakService $tsService): JsonResponse
+    {
+        try {
+            // Busca o primeiro servidor master configurado para pegar a instância
+            $master = \App\Models\TeamSpeakServerMaster::first();
+            if (!$master) throw new \Exception("Nenhum servidor master configurado.");
+
+            $tsService->connect($master);
+            $info = $tsService->adapter()->instanceInfo();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'flood_commands' => $info['data']['serverinstance_serverquery_flood_commands'] ?? 10,
+                    'flood_time' => $info['data']['serverinstance_serverquery_flood_time'] ?? 3,
+                    'ban_time' => $info['data']['serverinstance_serverquery_ban_time'] ?? 600,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Atualizar configurações do Server Query
+     */
+    public function updateQuerySettings(Request $request, \App\Services\TeamSpeakService $tsService): JsonResponse
+    {
+        $request->validate([
+            'flood_commands' => 'required|integer',
+            'flood_time' => 'required|integer',
+            'ban_time' => 'required|integer',
+        ]);
+
+        try {
+            $master = \App\Models\TeamSpeakServerMaster::first();
+            if (!$master) throw new \Exception("Nenhum servidor master configurado.");
+
+            $tsService->connect($master);
+            $data = [
+                'serverinstance_serverquery_flood_commands' => $request->flood_commands,
+                'serverinstance_serverquery_flood_time' => $request->flood_time,
+                'serverinstance_serverquery_ban_time' => $request->ban_time,
+            ];
+
+            $tsService->adapter()->instanceEdit($data);
+
+            return response()->json(['success' => true, 'message' => 'Configurações do Server Query atualizadas com sucesso!']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**

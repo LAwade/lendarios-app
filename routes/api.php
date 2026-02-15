@@ -65,6 +65,10 @@ Route::prefix('v1')->group(function () {
             Route::get('orders', [AdminApiController::class, 'orders']);
             Route::post('orders/{id}/confirm', [AdminApiController::class, 'confirmOrder']);
             Route::post('orders/{id}/cancel', [AdminApiController::class, 'cancelOrder']);
+            
+            // Configurações Globais do TS3 Query
+            Route::get('query-settings', [AdminApiController::class, 'getQuerySettings']);
+            Route::post('query-settings', [AdminApiController::class, 'updateQuerySettings']);
         });
     });
 });

@@ -13,6 +13,11 @@ class Product extends Model
     {
         return $this->hasMany(Item::class);
     }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
     
     static function findProductCart(array $cart)
     {

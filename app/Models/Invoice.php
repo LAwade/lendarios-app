@@ -17,6 +17,8 @@ class Invoice extends Model
         'status_id'
     ];
 
+    protected $appends = ['paid_at'];
+
     public function order()
     {
         return $this->belongsTo(Order::class);
@@ -25,5 +27,11 @@ class Invoice extends Model
     public function status()
     {
         return $this->belongsTo(Status::class, 'status_id');
+    }
+
+    // Alias para compatibilidade
+    public function getPaidAtAttribute()
+    {
+        return $this->payment_date;
     }
 }

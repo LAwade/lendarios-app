@@ -32,8 +32,8 @@ class AdminApiController extends Controller
                 'pending_invoices' => Invoice::where('status_id', 2)->count(),
                 'open_tickets' => Ticket::where('status', 'open')->count(),
                 'monthly_revenue' => Invoice::where('status_id', 1)
-                    ->whereMonth('paid_at', now()->month)
-                    ->whereYear('paid_at', now()->year)
+                    ->whereMonth('payment_date', now()->month)
+                    ->whereYear('payment_date', now()->year)
                     ->sum('amount'),
                 'total_revenue' => Invoice::where('status_id', 1)->sum('amount'),
                 'pending_revenue' => Invoice::where('status_id', 2)->sum('amount'),
@@ -154,7 +154,17 @@ class AdminApiController extends Controller
      */
     public function orders(): JsonResponse
     {
-        $orders = Order::with(['user', 'product', 'invoice'])->orderBy('created_at', 'desc')->get();
+        $orders = Order::with(['user', 'itens.product', 'invoice'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($order) {
+                $order->product = $order->itens->first()?->product;
+                $order->total = $order->itens->sum(function($item) {
+                    return $item->quantity * ($item->product->price ?? 0);
+                });
+                $order->status = $order->status_name;
+                return $order;
+            });
         return response()->json(['success' => true, 'data' => $orders]);
     }
 
@@ -163,22 +173,23 @@ class AdminApiController extends Controller
      */
     public function confirmOrder($id): JsonResponse
     {
-        $order = Order::with(['product', 'invoice'])->find($id);
+        $order = Order::with(['itens.product', 'invoice'])->find($id);
         if (!$order) return response()->json(['success' => false, 'message' => 'Pedido não encontrado'], 404);
 
         DB::beginTransaction();
         try {
-            $order->status = 'completed';
+            $order->status_id = 1; // Completed
             $order->save();
 
             if ($order->invoice) {
                 $order->invoice->status_id = 1; // Pago
-                $order->invoice->paid_at = now();
+                $order->invoice->payment_date = now();
                 $order->invoice->save();
             }
 
             // Simular criação de servidor TeamSpeak se for um produto de TS3
-            if (str_contains(strtolower($order->product->name), 'plano') || str_contains(strtolower($order->product->name), 'ts3')) {
+            $product = $order->itens->first()?->product;
+            if ($product && (str_contains(strtolower($product->name), 'plano') || str_contains(strtolower($product->name), 'ts3'))) {
                 TeamSpeakVirtualServer::create([
                     'user_id' => $order->user_id,
                     'order_id' => $order->id,

@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'cloudflare' => [
+        'zone_id' => env('CLOUDFLARE_ZONE_ID'),
+        'email' => env('CLOUDFLARE_EMAIL'),
+        'api_key' => env('CLOUDFLARE_API_KEY'),
+        'teamspeak_domain' => env('CLOUDFLARE_TEAMSPEAK_DOMAIN', 'ts3.lendariosteam.com.br'),
+    ],
+
 ];

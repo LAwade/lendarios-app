@@ -45,6 +45,30 @@ Route::prefix('v1')->group(function () {
         Route::get('teamspeak/{id}/channels', [TeamSpeakApiController::class, 'channels']);
         Route::post('teamspeak/{id}/token', [TeamSpeakApiController::class, 'generateToken']);
         Route::post('teamspeak/{id}/template', [TeamSpeakApiController::class, 'applyTemplate']);
+        
+        // TeamSpeak - Restaurar Server Admin
+        Route::post('teamspeak/{id}/restore-admin', [TeamSpeakApiController::class, 'restoreAdmin']);
+        
+        // TeamSpeak - Gestão de Membros e Grupos
+        Route::get('teamspeak/{id}/clients/online', [TeamSpeakApiController::class, 'onlineClients']);
+        Route::get('teamspeak/{id}/clients', [TeamSpeakApiController::class, 'allClients']);
+        Route::get('teamspeak/{id}/groups', [TeamSpeakApiController::class, 'groups']);
+        Route::post('teamspeak/{id}/groups/client', [TeamSpeakApiController::class, 'clientGroups']);
+        Route::post('teamspeak/{id}/groups/add', [TeamSpeakApiController::class, 'addGroup']);
+        Route::post('teamspeak/{id}/groups/remove', [TeamSpeakApiController::class, 'removeGroup']);
+        
+        // TeamSpeak - Banimentos
+        Route::get('teamspeak/{id}/bans', [TeamSpeakApiController::class, 'bans']);
+        Route::post('teamspeak/{id}/bans', [TeamSpeakApiController::class, 'addBan']);
+        Route::delete('teamspeak/{id}/bans', [TeamSpeakApiController::class, 'removeBan']);
+        
+        // TeamSpeak - Backup
+        Route::get('teamspeak/{id}/backups', [TeamSpeakApiController::class, 'listBackups']);
+        Route::post('teamspeak/{id}/backup', [TeamSpeakApiController::class, 'createBackup']);
+        Route::post('teamspeak/{id}/backup/restore', [TeamSpeakApiController::class, 'restoreBackup']);
+        
+        // TeamSpeak - Template Completo
+        Route::post('teamspeak/{id}/template/full', [TeamSpeakApiController::class, 'applyTemplateFull']);
 
         // Tibia Bot
         Route::get('teamspeak/{id}/tibiabot', [TibiaBotApiController::class, 'show']);

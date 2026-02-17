@@ -8,9 +8,11 @@ use App\Models\Order;
 use App\Models\Invoice;
 use App\Models\Ticket;
 use App\Models\TeamSpeakVirtualServer;
+use App\Services\CloudflareService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AdminApiController extends Controller
 {
@@ -171,7 +173,7 @@ class AdminApiController extends Controller
     /**
      * Confirmar um pedido
      */
-    public function confirmOrder($id): JsonResponse
+    public function confirmOrder($id, CloudflareService $cfService): JsonResponse
     {
         $order = Order::with(['itens.product', 'invoice'])->find($id);
         if (!$order) return response()->json(['success' => false, 'message' => 'Pedido não encontrado'], 404);
@@ -187,22 +189,43 @@ class AdminApiController extends Controller
                 $order->invoice->save();
             }
 
-            // Simular criação de servidor TeamSpeak se for um produto de TS3
+            // Criar servidor TeamSpeak se for um produto de TS3
             $product = $order->itens->first()?->product;
             if ($product && (str_contains(strtolower($product->name), 'plano') || str_contains(strtolower($product->name), 'ts3'))) {
+                
+                // Gerar nome DNS único baseado no usuário
+                $dnsName = Str::slug($order->user->name, '') . rand(100, 999);
+                
+                // Obter porta disponível (usar TeamSpeakService real aqui)
+                $port = rand(9987, 12000); // TODO: usar TeamSpeakService para criar servidor real
+                
+                // Criar registro DNS no Cloudflare
+                $dnsRecord = $cfService->createDNS($dnsName, $port);
+                $dnsRecordId = $dnsRecord['id'] ?? null;
+                
+                // Criar servidor virtual no banco
                 TeamSpeakVirtualServer::create([
                     'user_id' => $order->user_id,
                     'order_id' => $order->id,
                     'name' => 'Servidor de ' . $order->user->name,
-                    'port' => rand(9987, 12000),
+                    'virtual_port' => $port,
                     'slots' => 50, // Padrão
                     'status' => 'online',
+                    'dns_name' => $dnsName,
+                    'dns_record_id' => $dnsRecordId,
                     'expires_at' => now()->addMonth(),
                 ]);
             }
 
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'Pedido confirmado e serviço ativado']);
+            
+            $dnsFull = $dnsName ? $cfService->getFullDomain($dnsName) : null;
+            
+            return response()->json([
+                'success' => true, 
+                'message' => 'Pedido confirmado e serviço ativado',
+                'dns' => $dnsFull
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
@@ -212,19 +235,39 @@ class AdminApiController extends Controller
     /**
      * Cancelar um pedido
      */
-    public function cancelOrder($id): JsonResponse
+    public function cancelOrder($id, CloudflareService $cfService): JsonResponse
     {
         $order = Order::find($id);
         if (!$order) return response()->json(['success' => false, 'message' => 'Pedido não encontrado'], 404);
 
-        $order->status = 'cancelled';
-        $order->save();
+        DB::beginTransaction();
+        try {
+            $order->status = 'cancelled';
+            $order->save();
 
-        if ($order->invoice) {
-            $order->invoice->status_id = 3; // Cancelado
-            $order->invoice->save();
+            if ($order->invoice) {
+                $order->invoice->status_id = 3; // Cancelado
+                $order->invoice->save();
+            }
+
+            // Deletar servidor TeamSpeak e DNS associado
+            $virtualServer = TeamSpeakVirtualServer::where('order_id', $order->id)->first();
+            if ($virtualServer) {
+                // Deletar DNS no Cloudflare
+                if ($virtualServer->dns_record_id) {
+                    $cfService->deleteDNS($virtualServer->dns_record_id);
+                }
+                
+                // Marcar servidor como cancelado (ou deletar, conforme preferência)
+                $virtualServer->status = 'cancelled';
+                $virtualServer->save();
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Pedido cancelado']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-
-        return response()->json(['success' => true, 'message' => 'Pedido cancelado']);
     }
 }

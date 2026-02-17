@@ -15,6 +15,8 @@ class TeamSpeakVirtualServer extends Model
         'product_id',
         'virtual_port',
         'sid',
+        'dns_name',
+        'dns_record_id',
         'status', // online, offline, suspended
         'expires_at'
     ];
@@ -32,5 +34,18 @@ class TeamSpeakVirtualServer extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Retorna o DNS completo para conexão TeamSpeak
+     */
+    public function getDnsFullAttribute(): ?string
+    {
+        if (!$this->dns_name) {
+            return null;
+        }
+        
+        $teamspeakDomain = config('services.cloudflare.teamspeak_domain', 'ts3.lendariosteam.com.br');
+        return "{$this->dns_name}.{$teamspeakDomain}";
     }
 }

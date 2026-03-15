@@ -28,8 +28,8 @@ class DatabaseSeeder extends Seeder
 
         // Criar Permissões
         $permissions = [
-            ['id' => 1, 'name' => 'Admin'],
-            ['id' => 2, 'name' => 'Cliente'],
+            ['id' => 1, 'name' => 'Admin', 'value' => 1],
+            ['id' => 2, 'name' => 'Cliente', 'value' => 2],
         ];
         foreach ($permissions as $perm) {
             \App\Models\Permission::updateOrCreate(['id' => $perm['id']], $perm);

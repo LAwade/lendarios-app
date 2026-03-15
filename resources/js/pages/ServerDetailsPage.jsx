@@ -14,9 +14,13 @@ import {
     CheckCircle,
     AlertTriangle,
     Zap,
-    Bot
+    Bot,
+    Database
 } from 'lucide-react';
 import TibiaBotSection from '../components/TibiaBotSection';
+import TeamSpeakClients from '../components/TeamSpeakClients';
+import TeamSpeakBans from '../components/TeamSpeakBans';
+import TeamSpeakBackups from '../components/TeamSpeakBackups';
 
 export default function ServerDetailsPage() {
     const { id } = useParams();
@@ -82,17 +86,38 @@ export default function ServerDetailsPage() {
                 </div>
 
                 <div className="flex gap-3">
-                    <div className="flex bg-white/50 p-1.5 rounded-2xl border border-gray-100 shadow-sm mr-4">
+                    <div className="flex bg-white/50 p-1.5 rounded-2xl border border-gray-100 shadow-sm mr-4 overflow-x-auto">
                         <button 
                             onClick={() => setActiveTab('ts3')}
-                            className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition ${activeTab === 'ts3' ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
+                            className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition whitespace-nowrap ${activeTab === 'ts3' ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-900'}`}
                         >
                             <Server size={14} />
                             <span>TS3 Admin</span>
                         </button>
                         <button 
+                            onClick={() => setActiveTab('clients')}
+                            className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition whitespace-nowrap ${activeTab === 'clients' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-400 hover:text-gray-900'}`}
+                        >
+                            <Users size={14} />
+                            <span>Clientes</span>
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('bans')}
+                            className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition whitespace-nowrap ${activeTab === 'bans' ? 'bg-red-600 text-white shadow-lg shadow-red-200' : 'text-gray-400 hover:text-gray-900'}`}
+                        >
+                            <Shield size={14} />
+                            <span>Bans</span>
+                        </button>
+                        <button 
+                            onClick={() => setActiveTab('backups')}
+                            className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition whitespace-nowrap ${activeTab === 'backups' ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-200' : 'text-gray-400 hover:text-gray-900'}`}
+                        >
+                            <Database size={14} />
+                            <span>Backups</span>
+                        </button>
+                        <button 
                             onClick={() => setActiveTab('tibia')}
-                            className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition ${activeTab === 'tibia' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-400 hover:text-gray-900'}`}
+                            className={`flex items-center space-x-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition whitespace-nowrap ${activeTab === 'tibia' ? 'bg-green-600 text-white shadow-lg shadow-green-200' : 'text-gray-400 hover:text-gray-900'}`}
                         >
                             <Bot size={14} />
                             <span>Tibia Bot</span>
@@ -217,6 +242,12 @@ export default function ServerDetailsPage() {
                         </div>
                     </div>
                 </div>
+            ) : activeTab === 'clients' ? (
+                <TeamSpeakClients serverId={id} />
+            ) : activeTab === 'bans' ? (
+                <TeamSpeakBans serverId={id} />
+            ) : activeTab === 'backups' ? (
+                <TeamSpeakBackups serverId={id} />
             ) : (
                 <TibiaBotSection serverId={id} />
             )}
